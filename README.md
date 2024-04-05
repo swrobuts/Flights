@@ -1,1 +1,2 @@
-# flights
+# Flights 🛫
+Die Fallstudie, deren Daten von Kaggle.com stammen, zielt darauf ab, große Datenmengen mit DuckDB performant verarbeiten zu können. Das Loading der Daten übernimmt dabei DuckDB, die Daten werden im Arbeitsspeicher der lokalen Maschine verarbeitet und schrittweise in DB-Views für die späteren Analysen überführt. Sämtliche Maßnahmen im Zuge von Data Preparation übernimmt DuckDB. Am Ende werden die Daten in pandas dataFrames gespeichert und in Folgeschritten analysiert und visualisiert.
