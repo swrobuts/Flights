@@ -33,7 +33,7 @@ if selected_reason != 'Alle':
     cancellations_summary = cancellations_summary[cancellations_summary['cancellation_reason'] == selected_reason]
 
 # Zwei Spalten für die Container erstellen
-col1, col2 = st.columns([3, 2])  # Verhältnis von 3:2 für die Spaltenbreiten
+col1, col2 = st.columns([2, 2], gap="large")  # Verhältnis von 3:2 für die Spaltenbreiten
 
 # Erster Container
 with col1:
@@ -60,16 +60,16 @@ with col1:
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0, max_cancellations + padding], title_text=''),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=True, title_text=''),
         plot_bgcolor='rgba(0,0,0,0)',
-        width=700,  # Breite des Balkendiagramms anpassen
-        height=350,
-        margin=dict(l=0, r=0, t=0, b=0)
+        width=400,  # Breite des Balkendiagramms anpassen
+        height=370,
+        margin=dict(l=0, r=260, t=10, b=0)
     )
    
     # Anpassen der Fontsize bei den Labels
     fig.update_traces(textfont_size=16)
     
     # Diagramm in Streamlit anzeigen
-    st.plotly_chart(fig, use_container_width=False)
+    st.plotly_chart(fig, use_container_width=True)
 
 # Zweiter Container
 with col2:
@@ -110,13 +110,13 @@ with col2:
                                  sort=False)])
    
     # Anpassen der Fontsize bei den Labels
-    fig.update_traces(textfont_size=12)
+    fig.update_traces(textfont_size=13)
    
     # Anpassen der Größe des Diagramms und Legende entfernen
-    fig.update_layout(width=350, height=350, showlegend=False)
+    fig.update_layout(width=300, height=350, showlegend=False, margin=dict(l=10, r=500, t=80, b=0))  # Rechten Rand des Kreisdiagramms anpassen
    
     # Diagramm in Streamlit anzeigen
-    st.plotly_chart(fig, use_container_width=False)
+    st.plotly_chart(fig, use_container_width=True)
 
 # Streamlit-App starten
 st.title('Analyse der Stornierungen nach Fluggesellschaft')
