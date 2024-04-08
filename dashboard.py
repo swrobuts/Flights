@@ -6,20 +6,6 @@ import plotly.express as px
 # Seitenlayouteinstellungen anpassen
 st.set_page_config(layout="wide")
 
-# CSS-Stil anwenden, um das Layout anzupassen
-st.markdown(
-    """
-    <style>
-    .reportview-container .main {
-        max-width: 1200px;
-        padding-left: 2rem;
-        padding-right: 2rem;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
 # Streamlit App Header
 st.title('Dashboard für Stornierungen')
 
