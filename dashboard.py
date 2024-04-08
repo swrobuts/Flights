@@ -1,43 +1,58 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-import matplotlib.colors as mcolors
-
-# Beispiel-Daten, ersetze dies durch deine tatsächlichen Daten
-cancellations_summary = pd.read_csv(r"C:\Users\rober\OneDrive\Vorlesungen\Datenbasierte Fallstudien\Visualisierungen\Flights\Flights\cancellations_summary.csv")
-
-# Farbschema
-colors_hex = ["#db0d27", "#ec511a", "#f87d07", "#ffa600"]
-alpha = 0.65
-colors = [mcolors.to_rgba(c, alpha=alpha) for c in colors_hex][:len(cancellations_summary)]
-
-# Funktion zur Erstellung des Kreisdiagramms
-def create_pie_chart(data):
-    fig, ax = plt.subplots()
-    wedges, texts = ax.pie(data['cancellations'], startangle=90, counterclock=False, colors=colors, wedgeprops=dict(width=0.45))
-
-    # Annotationen hinzufügen
-    for i, p in enumerate(wedges):
-        ang = (p.theta2 - p.theta1) / 2. + p.theta1
-        x = np.cos(np.deg2rad(ang))
-        y = np.sin(np.deg2rad(ang))
-        
-        horizontalalignment = 'left' if x > 0 else 'right'
-        label_text = f"{data.iloc[i]['cancellation_reason']}\n{data.iloc[i]['cancellations']}\n({data.iloc[i]['percentage']}%)"
-        
-        ax.annotate(label_text, xy=(x, y), xycoords='data', 
-                    xytext=(1.2*np.sign(x), 1.2*y), textcoords='data',
-                    arrowprops=dict(arrowstyle="-", color="black", connectionstyle="angle,angleA=0,angleB=90"),
-                    horizontalalignment=horizontalalignment, verticalalignment='center')
-    
-    plt.title('Gründe für Stornierungen ("cancellation_reasons")', pad=20)
-    return fig
+import plotly.graph_objects as go
 
 # Streamlit App
-st.title('Stornierungsanalyse')
+st.markdown('<h1 style="font-size: 16px;">Stornierungen ("cancellations") nach Gründen</h1>', unsafe_allow_html=True)
 
-# Daten und Diagramm darstellen
-sorted_data = cancellations_summary.sort_values('cancellations', ascending=False)
-fig = create_pie_chart(sorted_data)
-st.pyplot(fig)
+# Pfad zur lokalen CSV-Datei
+file_path = r"C:\Users\rober\OneDrive\Vorlesungen\Datenbasierte Fallstudien\Visualisierungen\Flights\Flights\cancellations_summary.csv"
+
+# Lese die CSV-Datei direkt
+cancellations_summary = pd.read_csv(file_path)
+
+# Daten vorbereiten und nach 'cancellations' sortieren
+sorted_data = cancellations_summary.groupby('cancellation_reason', as_index=False)['cancellations'].sum().sort_values(by='cancellations', ascending=False)
+sorted_data['percentage'] = (sorted_data['cancellations'] / sorted_data['cancellations'].sum() * 100).round(1)
+sorted_data['text'] = sorted_data.apply(lambda x: f"{x['cancellation_reason']}<br>{x['cancellations']:,}".replace(",", ".") + f"<br>({x['percentage']}%)", axis=1)
+
+
+# Gruppierung der Fluggesellschaften und Berechnung der Gesamtanteile
+grouped_data = cancellations_summary.groupby(['cancellation_reason', 'airline'], as_index=False)['cancellations'].sum()
+hover_texts = grouped_data.groupby('cancellation_reason').apply(
+    lambda x: "<br>".join([f"{row['airline']}: {row['cancellations']}" for index, row in x.iterrows()])
+).reset_index(name='info')
+
+# Füge den vorbereiteten Hover-Text den ursprünglichen Daten hinzu
+final_data = cancellations_summary.groupby('cancellation_reason', as_index=False)['cancellations'].sum()
+final_data = final_data.merge(hover_texts, on='cancellation_reason', how='left')
+
+# Prozentwerte und formatierten Text zu 'final_data' hinzufügen
+final_data['percentage'] = (final_data['cancellations'] / final_data['cancellations'].sum() * 100).round(1)
+final_data['text'] = final_data.apply(lambda x: f"<b>{x['cancellation_reason']}</b><br>{x['cancellations']:,}".replace(",", ".") + f"<br>({x['percentage']} %)", axis=1)
+
+
+# Farbschema mit Alpha-Wert
+colors_hex = ["rgba(236, 81, 26, 0.65)", "rgba(248, 125, 7, 0.65)", 
+              "rgba(255, 166, 0, 0.65)", "rgba(219, 13, 39, 0.65)"]
+
+# Erstellung des Kreisdiagramms
+fig = go.Figure(data=[go.Pie(labels=final_data['cancellation_reason'], values=final_data['cancellations'],
+                             hoverinfo='label+percent', text=final_data['text'],  # Verwende 'final_data' für 'text'
+                             textinfo='text',
+                             marker=dict(colors=colors_hex),
+                             rotation=194,
+                             direction="clockwise",
+                             hovertemplate=final_data['info'].apply(lambda x: f'<b> %{{label}}</b><b> | Anzahl der Vorfälle nach Airline</b><br>{x}<extra></extra>'),
+                             hole=.6,
+                             sort=False)])
+
+# Anpassen der Fontsize bei den Labels
+fig.update_traces(textfont_size=14) 
+
+# Anpassen der Größe des Diagramms und Legende entfernen
+fig.update_layout(width=450, height=400, showlegend=False)
+
+
+# Diagramm in Streamlit anzeigen
+st.plotly_chart(fig)
