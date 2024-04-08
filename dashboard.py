@@ -62,7 +62,7 @@ with col1:
         plot_bgcolor='rgba(0,0,0,0)',
         width=400,  # Breite des Balkendiagramms anpassen
         height=370,
-        margin=dict(l=0, r=260, t=10, b=0)
+        margin=dict(l=0, r=160, t=0, b=0)
     )
    
     # Anpassen der Fontsize bei den Labels
@@ -113,7 +113,7 @@ with col2:
     fig.update_traces(textfont_size=13)
    
     # Anpassen der Größe des Diagramms und Legende entfernen
-    fig.update_layout(width=300, height=350, showlegend=False, margin=dict(l=10, r=500, t=80, b=0))  # Rechten Rand des Kreisdiagramms anpassen
+    fig.update_layout(width=400, height=400, showlegend=False, margin=dict(l=10, r=500, t=80, b=0))  # Rechten Rand des Kreisdiagramms anpassen
    
     # Diagramm in Streamlit anzeigen
     st.plotly_chart(fig, use_container_width=True)
