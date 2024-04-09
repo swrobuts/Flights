@@ -1,3 +1,4 @@
+import dash
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output
 import pandas as pd
@@ -5,7 +6,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # Dash-App erstellen
-app = Dash(__name__)
+app = Dash()
 
 # URL zur CSV-Datei
 URL = "https://media.githubusercontent.com/media/swrobuts/Flights/main/cancellations_summary.csv"
