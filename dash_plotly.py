@@ -365,18 +365,6 @@ def update_pie_chart(selected_airline, selected_reason, selected_year, selected_
     return fig
 
 
-import plotly.graph_objects as go
-
-import plotly.graph_objects as go
-
-import plotly.express as px
-
-
-import plotly.express as px
-
-
-import plotly.express as px
-
 # Callback für das Small Multiples
 @app.callback(
     Output('cancellations-sm-chart', 'figure'),
@@ -451,18 +439,6 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
         )
 
     return fig
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #Dash-App starten
