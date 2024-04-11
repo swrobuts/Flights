@@ -82,18 +82,6 @@ app.layout = html.Div([
             value='Alle',
             clearable=False
         ),
-        dcc.Dropdown(
-            id='year-dropdown',
-            options=[{'label': year, 'value': year} for year in ['Alle'] + sorted(cancellations_summary['year'].unique().tolist())],
-            value='Alle',
-            clearable=False
-        ),
-        dcc.Dropdown(
-            id='month-dropdown',
-            options=[{'label': month, 'value': month} for month in ['Alle'] + sorted(cancellations_summary['month'].unique().tolist())],
-            value='Alle',
-            clearable=False
-        ),
     ], id='sidebar', style=styles['sidebar']),
     html.I(id="toggle-sidebar", n_clicks=0, style=styles['icon']),
     html.Div([
@@ -164,21 +152,15 @@ def toggle_sidebar(n_clicks, sidebar_style, icon_style, content_style):
 @app.callback(
     Output('cancellations-bar-chart', 'figure'),
     [Input('airline-dropdown', 'value'),
-     Input('reason-dropdown', 'value'),
-     Input('year-dropdown', 'value'),
-     Input('month-dropdown', 'value')]
+     Input('reason-dropdown', 'value')]
 )
-def update_bar_chart(selected_airline, selected_reason, selected_year, selected_month):
+def update_bar_chart(selected_airline, selected_reason):
     filtered_data = cancellations_summary.copy()
    
     if selected_airline != 'Alle':
         filtered_data = filtered_data[filtered_data['airline'] == selected_airline]
     if selected_reason != 'Alle':
         filtered_data = filtered_data[filtered_data['cancellation_reason'] == selected_reason]
-    if selected_year != 'Alle':
-        filtered_data = filtered_data[filtered_data['year'] == selected_year]
-    if selected_month != 'Alle':
-        filtered_data = filtered_data[filtered_data['month'] == selected_month]
    
     cancellations_sorted = filtered_data.groupby('airline', as_index=False)['cancellations'].sum().sort_values(by='cancellations', ascending=True)
     cancellations_sorted['formatted_cancellations'] = cancellations_sorted['cancellations'].apply(lambda x: "{:,.0f}".format(x).replace(",", "."))
@@ -212,21 +194,15 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
 @app.callback(
     Output('cancellations-pie-chart', 'figure'),
     [Input('airline-dropdown', 'value'),
-     Input('reason-dropdown', 'value'),
-     Input('year-dropdown', 'value'),
-     Input('month-dropdown', 'value')]
+     Input('reason-dropdown', 'value')]
 )
-def update_pie_chart(selected_airline, selected_reason, selected_year, selected_month):
+def update_pie_chart(selected_airline, selected_reason):
     filtered_data = cancellations_summary.copy()
    
     if selected_airline != 'Alle':
         filtered_data = filtered_data[filtered_data['airline'] == selected_airline]
     if selected_reason != 'Alle':
         filtered_data = filtered_data[filtered_data['cancellation_reason'] == selected_reason]
-    if selected_year != 'Alle':
-        filtered_data = filtered_data[filtered_data['year'] == selected_year]
-    if selected_month != 'Alle':
-        filtered_data = filtered_data[filtered_data['month'] == selected_month]
    
     sorted_data = filtered_data.groupby('cancellation_reason', as_index=False)['cancellations'].sum().sort_values(by='cancellations', ascending=False)
     sorted_data['percentage'] = (sorted_data['cancellations'] / sorted_data['cancellations'].sum() * 100).round(1)
@@ -266,29 +242,22 @@ def update_pie_chart(selected_airline, selected_reason, selected_year, selected_
 @app.callback(
     Output('cancellations-line-chart', 'figure'),
     [Input('airline-dropdown', 'value'),
-     Input('reason-dropdown', 'value'),
-     Input('year-dropdown', 'value'),
-     Input('month-dropdown', 'value')]
+     Input('reason-dropdown', 'value')]
 )
-def update_line_chart(selected_airline, selected_reason, selected_year, selected_month):
+def update_line_chart(selected_airline, selected_reason):
     filtered_data = cancellations_summary.copy()
    
     if selected_airline != 'Alle':
         filtered_data = filtered_data[filtered_data['airline'] == selected_airline]
     if selected_reason != 'Alle':
         filtered_data = filtered_data[filtered_data['cancellation_reason'] == selected_reason]
-    if selected_year != 'Alle':
-        filtered_data = filtered_data[filtered_data['year'] == selected_year]
-    if selected_month != 'Alle':
-        filtered_data = filtered_data[filtered_data['month'] == selected_month]
    
-    line_data = filtered_data.groupby(['year', 'month'], as_index=False)['cancellations'].sum()
-    line_data['date'] = pd.to_datetime(line_data[['year', 'month']].assign(day=1))
+    line_data = filtered_data.groupby('airline', as_index=False)['cancellations'].sum()
    
-    fig = px.line(line_data, x='date', y='cancellations')
+    fig = px.line(line_data, x='airline', y='cancellations')
    
     fig.update_layout(
-        xaxis=dict(title='Datum'),
+        xaxis=dict(title='Fluggesellschaft'),
         yaxis=dict(title='Anzahl der Stornierungen'),
         height=350,
         margin=dict(l=0, r=0, t=0, b=0)
