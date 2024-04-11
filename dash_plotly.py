@@ -131,7 +131,7 @@ app.layout = html.Div([
                 dbc.Col(dcc.Graph(id='cancellations-pie-chart'), width=6),
             ]),
             dbc.Row([
-                dbc.Col(dcc.Graph(id='cancellations-line-chart'), width=12),
+                dbc.Col(dcc.Graph(id='cancellations-sm-chart'), width=12),
             ]),
         ])
     ], id='content', style=styles['content'])
@@ -365,17 +365,18 @@ def update_pie_chart(selected_airline, selected_reason, selected_year, selected_
     return fig
 
 
-# Callback für das Liniendiagramm
+# Callback für das Small Multiples
 @app.callback(
-    Output('cancellations-line-chart', 'figure'),
+    Output('cancellations-sm-chart', 'figure'),
     [Input('airline-dropdown', 'value'),
      Input('reason-dropdown', 'value'),
      Input('year-dropdown', 'value'),
      Input('month-dropdown', 'value')]
 )
-def update_line_chart(selected_airline, selected_reason, selected_year, selected_month):
+def update_bar_chart(selected_airline, selected_reason, selected_year, selected_month):
     filtered_airlines = airlines_summary.copy()
-   
+
+    # Anwendung der Filter
     if selected_airline != 'Alle':
         filtered_airlines = filtered_airlines[filtered_airlines['airline'] == selected_airline]
     if selected_reason != 'Alle':
@@ -383,21 +384,33 @@ def update_line_chart(selected_airline, selected_reason, selected_year, selected
     if selected_year != 'Alle':
         filtered_airlines = filtered_airlines[filtered_airlines['year'] == selected_year]
     if selected_month != 'Alle':
-        filtered_airlines = filtered_airlines[filtered_airlines['month'] == selected_month]
-
-    line_data = filtered_airlines.groupby([['month','airline']], as_index=False)[['cancellation_rate_percent', 'percent of arrivals on time']].max()
+        filtered_airlines = filtered_airlines[filtered_airlines['month_int'] == selected_month]
     
+    # Umrechnung der Stornierungsrate in Gegenrate
+    filtered_airlines['non_cancellation_rate_percent'] = 100 - filtered_airlines['cancellation_rate_percent']
+    
+    # Erstellung des Balkendiagramms als Small Multiples
+    fig = px.bar(filtered_airlines,
+                 x='month',
+                 y=['percent of arrivals on time', 'non_cancellation_rate_percent'],
+                 facet_col='airline',
+                 labels={'value': 'Prozent', 'month': 'Monat', 'variable': 'Metrik'},
+                 title='Monatliche Leistungsdaten nach Airline',
+                 color_discrete_sequence=px.colors.qualitative.Set2)
 
-    fig = px.line(line_data, x='month', y='cancellations')
-
+    # Anpassung des Layouts und Verbesserung der Achsenskalierung
     fig.update_layout(
-    xaxis=dict(title='Datum'),
-    yaxis=dict(title='Anzahl der Stornierungen'),
-    height=350,
-    margin=dict(l=0, r=0, t=0, b=0)
-)
+        xaxis=dict(title='Monat'),
+        yaxis=dict(title='Prozent'),
+        height=600,  # Größere Höhe für eine bessere Lesbarkeit der Facetten
+        margin=dict(l=10, r=10, t=50, b=10)
+    )
+    fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    fig.update_xaxes(tickmode='array', tickvals=list(range(1, 13)), ticktext=[datetime(2000, m, 1).strftime('%b') for m in range(1, 13)])
 
     return fig
+
+
 
 #Dash-App starten
 if __name__ == '__main__':
