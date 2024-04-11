@@ -16,10 +16,11 @@ app = Dash(__name__, external_stylesheets=[
 
 # URL zur CSV-Datei
 URL = "https://media.githubusercontent.com/media/swrobuts/Flights/main/cancellations_summary.csv"
-URL2 = ""
+URL2 = "https://media.githubusercontent.com/media/swrobuts/Flights/main/airliness_summary.csv"
 
 # Lese die CSV-Datei ein
 cancellations_summary = pd.read_csv(URL)
+airlines_summary = pd.read_csv(URL2)
 
 # Konvertiere Monatsnamen in numerische Werte
 month_map = {
@@ -365,9 +366,6 @@ def update_pie_chart(selected_airline, selected_reason, selected_year, selected_
 
 
 # Callback für das Liniendiagramm
-
-
-
 @app.callback(
     Output('cancellations-line-chart', 'figure'),
     [Input('airline-dropdown', 'value'),
@@ -376,21 +374,21 @@ def update_pie_chart(selected_airline, selected_reason, selected_year, selected_
      Input('month-dropdown', 'value')]
 )
 def update_line_chart(selected_airline, selected_reason, selected_year, selected_month):
-    filtered_data = cancellations_summary.copy()
+    filtered_airlines = airlines_summary.copy()
    
     if selected_airline != 'Alle':
-        filtered_data = filtered_data[filtered_data['airline'] == selected_airline]
+        filtered_airlines = filtered_airlines[filtered_airlines['airline'] == selected_airline]
     if selected_reason != 'Alle':
-        filtered_data = filtered_data[filtered_data['cancellation_reason'] == selected_reason]
+        filtered_airlines = filtered_airlines[filtered_airlines['cancellation_reason'] == selected_reason]
     if selected_year != 'Alle':
-        filtered_data = filtered_data[filtered_data['year'] == selected_year]
+        filtered_airlines = filtered_airlines[filtered_airlines['year'] == selected_year]
     if selected_month != 'Alle':
-        filtered_data = filtered_data[filtered_data['month'] == selected_month]
+        filtered_airlines = filtered_airlines[filtered_airlines['month'] == selected_month]
 
-    line_data = filtered_data.groupby(['year', 'month'], as_index=False)['cancellations'].sum()
-    line_data['date'] = pd.to_datetime(line_data[['year', 'month']].assign(day=1))
+    line_data = filtered_airlines.groupby([['month','airline']], as_index=False)[['cancellation_rate_percent', 'percent of arrivals on time']].max()
+    
 
-    fig = px.line(line_data, x='date', y='cancellations')
+    fig = px.line(line_data, x='month', y='cancellations')
 
     fig.update_layout(
     xaxis=dict(title='Datum'),
