@@ -365,6 +365,18 @@ def update_pie_chart(selected_airline, selected_reason, selected_year, selected_
     return fig
 
 
+import plotly.graph_objects as go
+
+import plotly.graph_objects as go
+
+import plotly.express as px
+
+
+import plotly.express as px
+
+
+import plotly.express as px
+
 # Callback für das Small Multiples
 @app.callback(
     Output('cancellations-sm-chart', 'figure'),
@@ -386,29 +398,70 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
     if selected_month != 'Alle':
         filtered_airlines = filtered_airlines[filtered_airlines['month_int'] == selected_month]
     
-    # Umrechnung der Stornierungsrate in Gegenrate
-    filtered_airlines['non_cancellation_rate_percent'] = 100 - filtered_airlines['cancellation_rate_percent']
-    
-    # Erstellung des Balkendiagramms als Small Multiples
-    fig = px.bar(filtered_airlines,
-                 x='month',
-                 y=['percent of arrivals on time', 'non_cancellation_rate_percent'],
-                 facet_col='airline',
-                 labels={'value': 'Prozent', 'month': 'Monat', 'variable': 'Metrik'},
-                 title='Monatliche Leistungsdaten nach Airline',
-                 color_discrete_sequence=px.colors.qualitative.Set2)
+    # Berechnung der Abweichung von 100%
+    filtered_airlines['arrivals_deviation'] = filtered_airlines['percent of arrivals on time'] - 100
+    filtered_airlines['cancellations_deviation'] = (100 - filtered_airlines['cancellation_rate_percent']) - 100
 
-    # Anpassung des Layouts und Verbesserung der Achsenskalierung
+    # Erstellung der Scatter-Plots mit Plotly Express
+    fig = px.scatter(filtered_airlines, 
+                     x='month_int', 
+                     y=['arrivals_deviation', 'cancellations_deviation'], 
+                     color='variable',
+                     facet_col='airline',
+                     facet_col_wrap=3,
+                     height=600,
+                     title='Abweichung von 100% Optimum pro Airline und Monat')
+
+    # Bestimme die maximale Abweichung, um die y-Achse symmetrisch zu machen
+    max_deviation = max(filtered_airlines['arrivals_deviation'].abs().max(), filtered_airlines['cancellations_deviation'].abs().max())
+
+    # Update für die Achseneigenschaften, um sicherzustellen, dass Monate konsistent sind
+    fig.update_xaxes(tickmode='array', tickvals=[filtered_airlines['month_int'].min(), filtered_airlines['month_int'].max()],
+                     ticktext=[filtered_airlines.loc[filtered_airlines['month_int'].idxmin(), 'month'], filtered_airlines.loc[filtered_airlines['month_int'].idxmax(), 'month']],
+                     showticklabels=True)
+
+    # Einstellung des Layouts für weißen Hintergrund
     fig.update_layout(
-        xaxis=dict(title='Monat'),
-        yaxis=dict(title='Prozent'),
-        height=600,  # Größere Höhe für eine bessere Lesbarkeit der Facetten
+        plot_bgcolor='rgba(255, 255, 255, 1)',
+        paper_bgcolor='rgba(255, 255, 255, 1)',
+        showlegend=False,
         margin=dict(l=10, r=10, t=50, b=10)
     )
-    fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-    fig.update_xaxes(tickmode='array', tickvals=list(range(1, 13)), ticktext=[datetime(2000, m, 1).strftime('%b') for m in range(1, 13)])
+
+    # Setze die symmetrische Skalierung für jede y-Achse
+    fig.update_yaxes(range=[-max_deviation, max_deviation])
+    fig.update_xaxes(title_text='')
+    fig.update_yaxes(title_text='')
+
+
+    # Füge für jede Facette eine horizontale Linie bei y=0 hinzu
+    for i in range(1, len(filtered_airlines['airline'].unique()) + 1):
+        fig.add_shape(
+            type="line",
+            xref=f"x{i}",
+            yref=f"y{i}",
+            x0=filtered_airlines['month_int'].min(),
+            x1=filtered_airlines['month_int'].max(),
+            y0=0,
+            y1=0,
+            line=dict(
+                color="grey",
+                width=2
+            )
+        )
 
     return fig
+
+
+
+
+
+
+
+
+
+
+
 
 
 
