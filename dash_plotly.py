@@ -16,6 +16,7 @@ app = Dash(__name__, external_stylesheets=[
 
 # URL zur CSV-Datei
 URL = "https://media.githubusercontent.com/media/swrobuts/Flights/main/cancellations_summary.csv"
+URL2 = ""
 
 # Lese die CSV-Datei ein
 cancellations_summary = pd.read_csv(URL)
@@ -115,7 +116,7 @@ app.layout = html.Div([
                     dbc.Card(
                         dbc.CardBody(
                             [
-                                html.H5("Gesamtzahl der Stornierungen", className="card-title"),
+                                html.H5("Stornierte Flüge", className="card-title"),
                                 html.P(id='total-cancellations', className="card-text"),
                             ]
                         ),
@@ -134,10 +135,6 @@ app.layout = html.Div([
         ])
     ], id='content', style=styles['content'])
 ])
-
-
-
-
 
 
 # Callback für das Ein-/Ausklappen der Sidebar
@@ -180,12 +177,11 @@ def update_total_cancellations(selected_airline, selected_reason, selected_year,
         filtered_data = filtered_data[filtered_data['cancellation_reason'] == selected_reason]
     if selected_year != 'Alle':
         filtered_data = filtered_data[filtered_data['year'] == selected_year]
-    if selected_month != 'Alle':
-        filtered_data = filtered_data[filtered_data['month'] == selected_month]
+    #if selected_month != 'Alle':
+       # filtered_data = filtered_data[filtered_data['month'] == selected_month]
    
     total_cancellations = filtered_data['cancellations'].sum()
    
-    # Berechne den Unterschied zum Vorjahr oder Vorjahresmonat
     if selected_year != 'Alle' and selected_month != 'Alle':
         current_date = datetime(int(selected_year), int(selected_month), 1)
         previous_date = current_date - relativedelta(months=1)
@@ -200,7 +196,7 @@ def update_total_cancellations(selected_airline, selected_reason, selected_year,
     if not previous_data.empty:
         previous_cancellations = previous_data['cancellations'].sum()
         difference = total_cancellations - previous_cancellations
-        percentage_change = (difference / previous_cancellations) * 100
+        percentage_change = (difference / previous_cancellations) * 100 if previous_cancellations != 0 else 0
        
         if difference > 0:
             arrow = html.Span('▲', style={'color': 'red', 'font-size': '25px'})
@@ -210,20 +206,41 @@ def update_total_cancellations(selected_airline, selected_reason, selected_year,
         # Erstelle die Sparklines für die monatlichen Stornierungen
         if selected_year != 'Alle':
             monthly_data = filtered_data.groupby('month')['cancellations'].sum().reset_index()
-            sparkline_fig = px.bar(monthly_data, x='month', y='cancellations', height=100, width=250)
+            month_names = [datetime(2000, int(m), 1).strftime('%b') for m in monthly_data['month']]
+            sparkline_fig = go.Figure(go.Bar(
+                x=month_names,
+                y=monthly_data['cancellations'],
+                marker_color='#7B96C4'
+            ))
+            sparkline_fig.update_traces(
+                text=monthly_data['cancellations'],
+                textposition='none',
+                hoverinfo='text',
+                hovertext=[f"{mon}: {val}" for mon, val in zip(month_names, monthly_data['cancellations'])]
+            )
             sparkline_fig.update_layout(
                 plot_bgcolor='rgba(0,0,0,0)',
                 paper_bgcolor='rgba(0,0,0,0)',
-                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                xaxis=dict(
+                    showgrid=False, 
+                    zeroline=False, 
+                    showticklabels=True, 
+                    tickmode='array', 
+                    tickvals=[month_names[0], month_names[-1]], 
+                    ticktext=[month_names[0], month_names[-1]]
+                ),
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                title_text='',
                 margin=dict(l=0, r=0, t=0, b=0),
+                height=100,
+                width=250,
                 hovermode='x'
             )
         else:
             sparkline_fig = None
        
         return [
-            html.H5("Gesamtzahl der stornierten Flüge", className="card-title"),
+            html.H5("Stornierte Flüge", className="card-title"),
             html.P([
                 html.Span(f"In {selected_year}: "),
                 html.Span(f"{total_cancellations:,.0f}".replace(",", "."))
@@ -238,9 +255,10 @@ def update_total_cancellations(selected_airline, selected_reason, selected_year,
         ]
     else:
         return [
-            html.H5("Gesamtzahl der stornierten Flüge", className="card-title"),
+            html.H5("Stornierte Flüge", className="card-title"),
             html.P(f"{total_cancellations:,.0f}".replace(",", "."), className="card-text")
         ]
+
 
 
 # Callback für das Balkendiagramm
@@ -345,7 +363,11 @@ def update_pie_chart(selected_airline, selected_reason, selected_year, selected_
    
     return fig
 
+
 # Callback für das Liniendiagramm
+
+
+
 @app.callback(
     Output('cancellations-line-chart', 'figure'),
     [Input('airline-dropdown', 'value'),
