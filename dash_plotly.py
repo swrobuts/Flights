@@ -1,6 +1,6 @@
 import dash
 from dash import Dash, dcc, html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
@@ -8,7 +8,8 @@ import dash_bootstrap_components as dbc
 
 # Dash-App erstellen
 app = Dash(__name__, external_stylesheets=[
-    'https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css'
+    'https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css'
 ])
 
 # URL zur CSV-Datei
@@ -22,7 +23,32 @@ styles = {
     'sidebar': {
         'background-color': '#f8f9fa',
         'min-height': '100vh',
-        'padding': '20px'
+        'padding': '20px',
+        'position': 'fixed',
+        'top': 0,
+        'left': 0,
+        'bottom': 0,
+        'width': '16.67%',
+        'transition': 'transform 0.3s'
+    },
+    'icon': {
+        'position': 'fixed',
+        'top': '50%',
+        'left': '16.67%',
+        'transform': 'translate(-50%, -50%)',
+        'cursor': 'pointer',
+        'font-size': '24px',
+        'color': 'red',
+        'background-color': '#f8f9fa',
+        'border-radius': '0 50% 50% 0',
+        'padding': '20px',
+        'box-shadow': '0 0 5px rgba(0, 0, 0, 0.2)',
+        'z-index': '1000',
+        'transition': 'left 0.3s'
+    },
+    'content': {
+        'margin-left': '20%',
+        'transition': 'margin-left 0.3s'
     }
 }
 
@@ -43,65 +69,84 @@ total_cancelled_flights_card = dbc.Card(
 # Layout der Dash-App
 app.layout = html.Div([
     html.Div([
+        html.H3('Filter'),
+        dcc.Dropdown(
+            id='airline-dropdown',
+            options=[{'label': airline, 'value': airline} for airline in ['Alle'] + sorted(cancellations_summary['airline'].unique().tolist())],
+            value='Alle',
+            clearable=False
+        ),
+        dcc.Dropdown(
+            id='reason-dropdown',
+            options=[{'label': reason, 'value': reason} for reason in ['Alle'] + sorted(cancellations_summary['cancellation_reason'].unique().tolist())],
+            value='Alle',
+            clearable=False
+        ),
+    ], id='sidebar', style=styles['sidebar']),
+    html.I(id="toggle-sidebar", n_clicks=0, style=styles['icon']),
+    html.Div([
+        html.H1('Dashboard für Stornierungen', className='text-center mb-4'),
         html.Div([
-            html.H3('Filter'),
-            dcc.Dropdown(
-                id='airline-dropdown',
-                options=[{'label': airline, 'value': airline} for airline in ['Alle'] + sorted(cancellations_summary['airline'].unique().tolist())],
-                value='Alle',
-                clearable=False
-            ),
-            dcc.Dropdown(
-                id='reason-dropdown',
-                options=[{'label': reason, 'value': reason} for reason in ['Alle'] + sorted(cancellations_summary['cancellation_reason'].unique().tolist())],
-                value='Alle',
-                clearable=False
-            )
-        ], className='col-md-2 sidebar', style=styles['sidebar']),
-        html.Div([
-            html.H1('Dashboard für Stornierungen', className='text-center mb-4'),
-            html.Div([
-                dbc.Row([
-                    dbc.Col(total_cancelled_flights_card, width=4),
-                    dbc.Col(
-                        dbc.Card(
-                            dbc.CardBody(
-                                [
-                                    html.H5("Durchschnittliche Stornierungen pro Fluggesellschaft", className="card-title"),
-                                    html.P(id='avg-cancellations', className="card-text"),
-                                ]
-                            ),
-                            className="mb-4",
+            dbc.Row([
+                dbc.Col(total_cancelled_flights_card, width=4),
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                html.H5("Durchschnittliche Stornierungen pro Fluggesellschaft", className="card-title"),
+                                html.P(id='avg-cancellations', className="card-text"),
+                            ]
                         ),
-                        width=4,
+                        className="mb-4",
                     ),
-                    dbc.Col(
-                        dbc.Card(
-                            dbc.CardBody(
-                                [
-                                    html.H5("Gesamtzahl der Stornierungen", className="card-title"),
-                                    html.P(id='total-cancellations', className="card-text"),
-                                ]
-                            ),
-                            className="mb-4",
+                    width=4,
+                ),
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                html.H5("Gesamtzahl der Stornierungen", className="card-title"),
+                                html.P(id='total-cancellations', className="card-text"),
+                            ]
                         ),
-                        width=4,
+                        className="mb-4",
                     ),
-                ]),
-                dbc.Row([
-                    dbc.Col(dcc.Graph(id='cancellations-bar-chart'), width=6),
-                    dbc.Col(dcc.Graph(id='cancellations-pie-chart'), width=6),
-                ]),
-                dbc.Row([
-                    dbc.Col(dcc.Graph(id='cancellations-line-chart'), width=12),
-                ]),
-            ])
-        ], className='col-md-10')
-    ], className='row')
+                    width=4,
+                ),
+            ]),
+            dbc.Row([
+                dbc.Col(dcc.Graph(id='cancellations-bar-chart'), width=6),
+                dbc.Col(dcc.Graph(id='cancellations-pie-chart'), width=6),
+            ]),
+            dbc.Row([
+                dbc.Col(dcc.Graph(id='cancellations-line-chart'), width=12),
+            ]),
+        ])
+    ], id='content', style=styles['content'])
 ])
 
-# Callback-Funktionen
-# ...
+# Callback für das Ein-/Ausklappen der Sidebar
+@app.callback(
+    [Output("sidebar", "style"),
+     Output("toggle-sidebar", "style"),
+     Output("toggle-sidebar", "className"),
+     Output("content", "style")],
+    [Input("toggle-sidebar", "n_clicks")],
+    [State("sidebar", "style"),
+     State("toggle-sidebar", "style"),
+     State("content", "style")],
+)
+def toggle_sidebar(n_clicks, sidebar_style, icon_style, content_style):
+    if n_clicks % 2 == 1:
+        sidebar_style['transform'] = 'translateX(-100%)'
+        icon_style['left'] = '0'
+        content_style['margin-left'] = '0'
+        return sidebar_style, icon_style, "fas fa-chevron-right", content_style
+    else:
+        sidebar_style['transform'] = 'translateX(0)'
+        icon_style['left'] = '16.67%'
+        content_style['margin-left'] = '19.67%'
+        return sidebar_style, icon_style, "fas fa-chevron-left", content_style
 
 # Callback für das Balkendiagramm
 @app.callback(
