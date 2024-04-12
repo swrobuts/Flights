@@ -7,6 +7,8 @@ import plotly.express as px
 import dash_bootstrap_components as dbc
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+import base64
+import kaleido
 
 # Dash-App erstellen
 app = Dash(__name__, external_stylesheets=[
@@ -127,15 +129,18 @@ app.layout = html.Div([
                 ),
             ]),
             dbc.Row([
-                dbc.Col(dcc.Graph(id='cancellations-bar-chart'), width=6),
-                dbc.Col(dcc.Graph(id='cancellations-pie-chart'), width=6),
+                dbc.Col(html.Div(id='flights-table'), width=5),
+                dbc.Col(dcc.Graph(id='cancellations-bar-chart', config={'displayModeBar': False}), width=4),   
+                dbc.Col(dcc.Graph(id='cancellations-pie-chart', config={'displayModeBar': False}), width=3),
             ]),
             dbc.Row([
-                dbc.Col(dcc.Graph(id='cancellations-sm-chart'), width=12),
+                dbc.Col(dcc.Graph(id='cancellations-sm-chart', config={'displayModeBar': False}), width=12),
             ]),
         ])
     ], id='content', style=styles['content'])
 ])
+
+
 
 
 # Callback für das Ein-/Ausklappen der Sidebar
@@ -260,6 +265,67 @@ def update_total_cancellations(selected_airline, selected_reason, selected_year,
             html.P(f"{total_cancellations:,.0f}".replace(",", "."), className="card-text")
         ]
 
+# Callback für die Tabelle mit Sparklines
+@app.callback(
+    Output('flights-table', 'children'),
+    [Input('airline-dropdown', 'value'),
+     Input('reason-dropdown', 'value'),
+     Input('year-dropdown', 'value'),
+     Input('month-dropdown', 'value')]
+)
+def update_flights_table(selected_airline, selected_reason, selected_year, selected_month):
+    filtered_data = airlines_summary.copy()
+    if selected_airline != 'Alle':
+        filtered_data = filtered_data[filtered_data['airline'] == selected_airline]
+    if selected_reason != 'Alle':
+        filtered_data = filtered_data[filtered_data['cancellation_reason'] == selected_reason]
+    if selected_year != 'Alle':
+        filtered_data = filtered_data[filtered_data['year'] == selected_year]
+    if selected_month != 'Alle':
+        filtered_data = filtered_data[filtered_data['month_int'] == selected_month]
+
+
+    table_rows = []
+    for airline in filtered_data['airline'].unique():
+        airline_data = filtered_data[filtered_data['airline'] == airline]
+        monthly_totals = airline_data.groupby(['month_int', 'month', 'year'])['total_flights'].sum().reset_index()
+        # Bereitet Hovertext vor
+        hover_texts = [f"{row['month']} {row['year']} Wert: {row['total_flights']}" for index, row in monthly_totals.iterrows()]
+
+
+
+        sparkline_fig = go.Figure(
+            go.Bar(
+                x=monthly_totals['month_int'], 
+                y=monthly_totals['total_flights'],
+                #text=monthly_totals['total_flights'],
+                hoverinfo='text+name',
+                marker=dict(color='#007bff'),
+                hovertext=hover_texts,
+                width = 0.75
+            )
+        )
+        sparkline_fig.update_layout(
+            height=30,
+            width=120,
+            margin=dict(l=0, r=0, t=0, b=10),
+            xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+            yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+            plot_bgcolor='rgba(255,255,255,1)',  # Setzt den Hintergrund der Grafik auf Weiß
+            paper_bgcolor='rgba(255,255,255,1)' 
+        )
+        
+        table_rows.append(html.Tr([
+            html.Td(airline, style={'width': '40%'}),  
+            html.Td(dcc.Graph(figure=sparkline_fig, config={'displayModeBar': False}), style={'width': '10%'}),
+            html.Td(f"{monthly_totals['total_flights'].iloc[-1]}", style={'width': '35%'})
+        ]))
+    
+    return html.Table([
+        html.Thead(html.Tr([html.Th('Airline', style={'width': '40%'}), html.Th('', style={'width': '10%'}), html.Th('Gesamtflüge')], style={'background-color': 'white'})),
+        html.Tbody(table_rows)
+    ], style={'font-size': '0.8rem', 'width': '55%'})
+
 
 
 # Callback für das Balkendiagramm
@@ -360,10 +426,11 @@ def update_pie_chart(selected_airline, selected_reason, selected_year, selected_
    
     fig.update_traces(textfont_size=11)
    
-    fig.update_layout(height=350, showlegend=False, margin=dict(l=0, r=0, t=0, b=0))
+    fig.update_layout(height=350, width=360, showlegend=False, margin=dict(l=0, r=0, t=0, b=0))
    
     return fig
 
+import plotly.express as px
 
 # Callback für das Small Multiples
 @app.callback(
@@ -386,44 +453,60 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
     if selected_month != 'Alle':
         filtered_airlines = filtered_airlines[filtered_airlines['month_int'] == selected_month]
     
-    # Berechnung der Abweichung von 100%
-    filtered_airlines['arrivals_deviation'] = filtered_airlines['percent of arrivals on time'] - 100
-    filtered_airlines['cancellations_deviation'] = (100 - filtered_airlines['cancellation_rate_percent']) - 100
-
+    # Berechnung der Abweichung von 100% für "percent of arrivals on time"
+    filtered_airlines['arrivals_deviation'] = 100 - filtered_airlines['percent of arrivals on time']
+    
     # Erstellung der Scatter-Plots mit Plotly Express
-    fig = px.scatter(filtered_airlines, 
-                     x='month_int', 
-                     y=['arrivals_deviation', 'cancellations_deviation'], 
-                     color='variable',
-                     facet_col='airline',
-                     facet_col_wrap=3,
-                     height=600,
-                     title='Abweichung von 100% Optimum pro Airline und Monat')
+    # Stellen Sie sicher, dass 'Alle' nicht in den Daten vorhanden ist, wenn die Plots erstellt werden
+    airlines_to_plot = filtered_airlines[filtered_airlines['airline'] != 'Alle']
 
-    # Bestimme die maximale Abweichung, um die y-Achse symmetrisch zu machen
-    max_deviation = max(filtered_airlines['arrivals_deviation'].abs().max(), filtered_airlines['cancellations_deviation'].abs().max())
+
+    fig = px.scatter(airlines_to_plot,
+                    x='month_int',
+                    y=['arrivals_deviation', 'cancellation_rate_percent'],
+                    color='variable',
+                    facet_col='airline',
+                    facet_col_wrap=7,  # Setzen Sie hier die Anzahl der Spalten
+                    height=530,
+                    facet_col_spacing=0.01,
+                    facet_row_spacing= 0.2,
+                    title='Performance der Airlines: Abweichung und Stornierungsrate')
+
+
+    # Anpassen der Markergröße und Transparenz basierend auf der Abweichung bzw. Wert
+    for trace in fig.data:
+        if 'arrivals_deviation' in trace.name:
+            trace['marker']['opacity'] = [0.6 + 0.4 * (1 - abs(y / 100)) for y in trace.y]
+            trace['marker']['size'] = [5 + 5 * (1 - abs(y / 100)) for y in trace.y]  # Moderate Größenanpassung
+        else:
+            trace['marker']['opacity'] = 0.6  # Konstante Opazität für tatsächliche Stornierungsraten
+            trace['marker']['size'] = 10  # Standardgröße
 
     # Update für die Achseneigenschaften, um sicherzustellen, dass Monate konsistent sind
-    fig.update_xaxes(tickmode='array', tickvals=[filtered_airlines['month_int'].min(), filtered_airlines['month_int'].max()],
-                     ticktext=[filtered_airlines.loc[filtered_airlines['month_int'].idxmin(), 'month'], filtered_airlines.loc[filtered_airlines['month_int'].idxmax(), 'month']],
-                     showticklabels=True)
+    fig.update_xaxes(tickmode='array',
+                        tickvals=[filtered_airlines['month_int'].min(),
+                        filtered_airlines['month_int'].max()],
+                        ticktext=[filtered_airlines.loc[filtered_airlines['month_int'].idxmin(), 'month'], filtered_airlines.loc[filtered_airlines['month_int'].idxmax(), 'month']],
+                        showticklabels=True,
+                        linecolor='grey', 
+                        title_text='')
+    fig.update_yaxes(title_text='') 
 
-    # Einstellung des Layouts für weißen Hintergrund
+    # Einstellung des Layouts für weißen Hintergrund und Legende
     fig.update_layout(
         plot_bgcolor='rgba(255, 255, 255, 1)',
         paper_bgcolor='rgba(255, 255, 255, 1)',
-        showlegend=False,
-        margin=dict(l=10, r=10, t=50, b=10)
+        showlegend=True,
+        margin=dict(l=20, r=0, t=60, b=20),
+        grid=dict(rows=filtered_airlines['airline'].nunique() // 3, columns=3, pattern='independent', xgap=0.2, ygap=0.8)  
     )
 
-    # Setze die symmetrische Skalierung für jede y-Achse
-    fig.update_yaxes(range=[-max_deviation, max_deviation])
-    fig.update_xaxes(title_text='')
-    fig.update_yaxes(title_text='')
+    # Setze die y-Achse so, dass 100 das Maximum ist
+    fig.update_yaxes(autorange="reversed", tickvals=[0, 20, 40, 60, 80, 100], ticktext=[100, 80, "","","",0])
 
-
-    # Füge für jede Facette eine horizontale Linie bei y=0 hinzu
+    # Füge für jede Facette spezielle Linien hinzu
     for i in range(1, len(filtered_airlines['airline'].unique()) + 1):
+        # Grüne Linie bei y=0 (entspricht 100% Optimum)
         fig.add_shape(
             type="line",
             xref=f"x{i}",
@@ -433,12 +516,39 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
             y0=0,
             y1=0,
             line=dict(
-                color="grey",
+                color="lime",
                 width=2
+            )
+        )
+        # Rote gepunktete Linie bei y=20 (entspricht 80% Schwellenwert)
+        fig.add_shape(
+            type="line",
+            xref=f"x{i}",
+            yref=f"y{i}",
+            x0=filtered_airlines['month_int'].min(),
+            x1=filtered_airlines['month_int'].max(),
+            y0=20,
+            y1=20,
+            line=dict(
+                color="red",
+                width=1,
+                dash="dot"
             )
         )
 
     return fig
+
+
+ 
+
+
+
+
+
+
+
+
+
 
 
 #Dash-App starten
