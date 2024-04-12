@@ -290,7 +290,7 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
         airline_data = filtered_data[filtered_data['airline'] == airline]
         monthly_totals = airline_data.groupby(['month_int', 'month', 'year'])['total_flights'].sum().reset_index()
         # Bereitet Hovertext vor
-        hover_texts = [f"{row['month']} {row['year']} Wert: {row['total_flights']}" for index, row in monthly_totals.iterrows()]
+        hover_texts = [f"{row['month']} {row['total_flights']}" for index, row in monthly_totals.iterrows()]
 
 
 
