@@ -265,7 +265,7 @@ def update_total_cancellations(selected_airline, selected_reason, selected_year,
             html.P(f"{total_cancellations:,.0f}".replace(",", "."), className="card-text")
         ]
 
-
+# Tabelle mit Sparklines
 # Callback für die Tabelle mit Sparklines
 @app.callback(
     Output('flights-table', 'children'),
@@ -283,53 +283,80 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
     if selected_year != 'Alle':
         filtered_data = filtered_data[filtered_data['year'] == selected_year]
     if selected_month != 'Alle':
-        filtered_data = filtered_data[filtered_data['month_int'] == selected_month]
-
+        filtered_data = filtered_data[filtered_data['month_int'] == int(selected_month)]
+    max_flights = filtered_data['total_flights'].max()
+    max_length = max([len(str(x)) for x in filtered_data['total_flights']])
+   
     table_rows = []
-    for airline in filtered_data['airline'].unique():
+    for airline in filtered_data.sort_values('total_flights', ascending=False)['airline'].unique():
         airline_data = filtered_data[filtered_data['airline'] == airline]
         monthly_totals = airline_data.groupby(['month_int', 'month', 'year'])['total_flights'].sum().reset_index()
-        percent_on_time = airline_data['percent of arrivals on time'].mean()  # Berechnet den Durchschnitt der Pünktlichkeitsrate
-
-        # Bereitet Hovertext vor
         hover_texts = [f"{row['month']} {row['total_flights']}" for index, row in monthly_totals.iterrows()]
-
+        monthly_totals = airline_data.groupby(['month_int', 'month', 'year']).agg({
+            'total_flights': 'sum',
+            'percent of arrivals on time': 'mean',
+            'percent of departures on time': 'mean'  
+        }).reset_index()
+       
         sparkline_fig = go.Figure(
             go.Bar(
-                x=monthly_totals['month_int'], 
+                x=monthly_totals['month_int'],
                 y=monthly_totals['total_flights'],
                 hoverinfo='text+name',
                 marker=dict(color='#007bff'),
                 hovertext=hover_texts,
-                width = 0.75
+                width=0.75
             )
         )
         sparkline_fig.update_layout(
             height=30,
-            width=120,
+            width=130,
             margin=dict(l=0, r=0, t=0, b=10),
             xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
             yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
             plot_bgcolor='rgba(255,255,255,1)',
             paper_bgcolor='rgba(255,255,255,1)'
         )
-
+        flights_value_formatted = f"{monthly_totals['total_flights'].iloc[-1]:{max_length},}".replace(",", ".")
+        bar_width = f"{(monthly_totals['total_flights'].iloc[-1] / max_flights) * 60:.1f}%"
+        flights_value_and_bar = html.Div([
+            html.Div(flights_value_formatted, style={'width': f'{max_length * 7}px', 'textAlign': 'right', 'marginRight': '8px'}),
+            html.Div(style={
+                'width': bar_width,
+                'height': '10px',
+                'backgroundColor': '#007bff',
+            })
+        ], style={'display': 'flex', 'width': '100%', 'alignItems': 'center', 'height': '70%'})
         table_rows.append(html.Tr([
-            html.Td(airline, style={'width': '40%'}),  
-            html.Td(dcc.Graph(figure=sparkline_fig, config={'displayModeBar': False}), style={'width': '10%'}),
-            html.Td(f"{monthly_totals['total_flights'].iloc[-1]}", style={'width': '25%'}),
-            html.Td(f"{percent_on_time:.2f}%", style={'width': '25%'})  # Fügt den Durchschnitt der Pünktlichkeitsrate hinzu
+            html.Td(airline, style={'width': '15%', 'paddingRight': '0px'}),  
+            html.Td(dcc.Graph(figure=sparkline_fig, config={'displayModeBar': False}), style={'width': '3%', 'paddingRight': '1px'}),
+            html.Td(flights_value_and_bar, style={'width': '12%', 'paddingRight': '8px'}),
+            html.Td(f"{monthly_totals['percent of arrivals on time'].iloc[-1]:.2f}%", style={'width': '15%'}),
+            html.Td(f"{monthly_totals['percent of departures on time'].iloc[-1]:.2f}%", style={'width': '15%'})
         ]))
     
+    # Hier wird das Label für die Flüge entsprechend den Filtereinstellungen angepasst
+    flights_label = "Alle Flüge"
+    if selected_year != 'Alle' and selected_month != 'Alle':
+        flights_label += f" in {selected_month}-{selected_year}"
+    elif selected_year != 'Alle':
+        flights_label += f" in {selected_year}"
     return html.Table([
         html.Thead(html.Tr([
-            html.Th('Airline', style={'width': '40%'}), 
-            html.Th('', style={'width': '10%'}), 
-            html.Th('Gesamtflüge', style={'width': '25%'}), 
-            html.Th('Pünktlichkeitsrate', style={'width': '25%'})  # Kopfzeile für die neue Spalte
+            html.Th('Airline'),
+            html.Th(''),
+            html.Th(flights_label),
+            html.Th('Pünktlichkeit bei Ankunft'),
+            html.Th('Pünktlichkeit bei Abflug')
         ], style={'background-color': 'white'})),
         html.Tbody(table_rows)
-    ], style={'font-size': '0.8rem', 'width': '65%'})
+    ], style={'font-size': '0.85rem', 'width': '100%', 'height': '70%'})
+
+
+
+
+
+
 
 
 
