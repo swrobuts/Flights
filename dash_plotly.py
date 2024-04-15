@@ -488,12 +488,10 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
     # Berechnung der Abweichung von 100% für "percent of arrivals on time"
     filtered_airlines['arrivals_deviation'] = 100 - filtered_airlines['percent of arrivals on time']
     
-    # Erstellung der Scatter-Plots mit Plotly Express
-    # Stellen Sie sicher, dass 'Alle' nicht in den Daten vorhanden ist, wenn die Plots erstellt werden
-    airlines_to_plot = filtered_airlines[filtered_airlines['airline'] != 'Alle']
 
 
-    fig = px.scatter(airlines_to_plot,
+
+    fig = px.scatter(filtered_airlines,
                     x='month_int',
                     y=['arrivals_deviation', 'cancellation_rate_percent'],
                     color='variable',
@@ -501,7 +499,7 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
                     facet_col_wrap=7,  # Setzen Sie hier die Anzahl der Spalten
                     height=530,
                     facet_col_spacing=0.01,
-                    facet_row_spacing= 0.2,
+                    facet_row_spacing= 0.3,
                     title='Performance der Airlines: Abweichung und Stornierungsrate')
 
 
@@ -530,7 +528,7 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
         paper_bgcolor='rgba(255, 255, 255, 1)',
         showlegend=True,
         margin=dict(l=20, r=0, t=60, b=20),
-        grid=dict(rows=filtered_airlines['airline'].nunique() // 3, columns=3, pattern='independent', xgap=0.2, ygap=0.8)  
+        #grid=dict(rows=filtered_airlines['airline'].nunique() // 3, columns=3, pattern='independent', xgap=0.2, ygap=0.8)  
     )
 
     # Setze die y-Achse so, dass 100 das Maximum ist
@@ -569,17 +567,6 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
         )
 
     return fig
-
-
- 
-
-
-
-
-
-
-
-
 
 
 
