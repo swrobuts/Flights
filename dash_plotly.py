@@ -66,7 +66,6 @@ styles = {
 }
 
 # Layout der Dash-App
-# Layout der Dash-App
 app.layout = html.Div([
     html.Div([
         html.H3('Filter'),
@@ -84,8 +83,8 @@ app.layout = html.Div([
         ),
         dcc.Dropdown(
             id='year-dropdown',
-            options=[{'label': year, 'value': year} for year in ['Alle'] + sorted(cancellations_summary['year'].unique().tolist())],
-            value='Alle',
+            options=[{'label': year, 'value': year} for year in sorted(cancellations_summary['year'].unique(), reverse=True)],
+            value=cancellations_summary['year'].max(),  # Setzt das höchste Jahr als Standardwert
             clearable=False
         ),
         dcc.Dropdown(
@@ -131,6 +130,13 @@ app.layout = html.Div([
             ]),
             dbc.Row([
                 dbc.Col(html.Div(id='flights-table'), width=5),
+                dbc.Col(html.Div(style={
+                    'width': '2px',
+                    'height': '437px',
+                    'backgroundColor': '#7F7F7F',
+                    'marginTop': '"30px',  # verschiebt die Linie nach oben
+                'marginLeft': '20px'  # verschiebt die Linie nach rechts
+            }), width={'size': 0.1, 'offset': 0}),  # Trennlinie  # Vertikale Trennlinie
                 dbc.Col(
                     html.Div([
                         dcc.Graph(id='cancellations-bar-chart', config={'displayModeBar': False}),
@@ -147,7 +153,6 @@ app.layout = html.Div([
         ])
     ], id='content', style=styles['content'])
 ])
-
 
 
 
@@ -430,8 +435,7 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
             html.Tr([html.Td('', style={'height': '10px'}) for _ in range(5)]),  # Leere Zeile einfügen
             *table_rows  # Bestehende Tabellenzeilen einfügen
         ], style={'border-top': '1px solid black'})
-    ], style={'font-size': '0.85rem', 'width': '100%', 'height': '70%'})
-
+    ], style={'font-size': '0.85rem', 'width': '100%', 'height': '80%'})
 
 
 # Callback für das Balkendiagramm und das Abweichungsdiagramm
@@ -444,7 +448,7 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
      Input('month-dropdown', 'value')]
 )
 def update_charts(selected_airline, selected_reason, selected_year, selected_month):
-    y_shift = 21  # Verschiebung entlang der y-Achse
+    y_shift = 16  # Verschiebung entlang der y-Achse
    
     filtered_data = cancellations_summary.copy()
    
@@ -493,10 +497,30 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
             automargin=True
         ),
         plot_bgcolor='rgba(0,0,0,0)',
-        height=490,
+        height=440,
         width=550,
-        margin=dict({'pad':0}, l=0, r=0, t=60, b=0),
-        bargap=0.4  # Abstand zwischen den Balken
+        margin=dict({'pad':6}, l=0, r=0, t=60, b=0),
+        bargap=0.4,  # Abstand zwischen den Balken
+        title=dict(
+            text=f"<b>Anzahl der Stornierungen nach Airlines in {selected_year if selected_year != 'Alle' else 'allen Jahren'} und Abweichungen zu {int(selected_year)-1 if selected_year != 'Alle' else 'Vorjahr'}",
+            font=dict(size=14),
+            x=0.49,
+            xanchor='center',
+            y=0.97,
+            yanchor='top'
+        ),
+        shapes=[
+            dict(
+                type='line',
+                x0=0,
+                x1=0,
+                y0=0,
+                y1=1,
+                xref='paper',
+                yref='paper',
+                line=dict(color='grey', width=1)
+            )
+        ]
     )
    
     fig_bar.update_traces(textfont_size=11, textposition='outside')
@@ -516,7 +540,6 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
         deviation_data['cancellations_previous'] = deviation_data['cancellations_previous'].fillna(0)
         deviation_data['deviation'] = ((deviation_data['cancellations_current'] - deviation_data['cancellations_previous']) / deviation_data['cancellations_current']) * 100
         deviation_data['formatted_deviation'] = deviation_data['deviation'].apply(lambda x: f"{x:+.1f}".replace('.', ',') + '%')
-
        
         # Sortierung des Abweichungsdiagramms entsprechend der Sortierung des Balkendiagramms
         deviation_data = deviation_data.set_index('airline').reindex(cancellations_sorted['airline']).reset_index()
@@ -525,7 +548,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
        
         fig_deviation = go.Figure()
        
-        line_height = 34.7  # Höhe jeder Linie
+        line_height = 35  # Höhe jeder Linie
        
         for i, row in deviation_data.iterrows():
             color = '#DE5D6D' if row['deviation'] >= 0 else '#1F5CB0'
@@ -580,7 +603,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
                 automargin=True
             ),
             plot_bgcolor='rgba(0,0,0,0)',
-            height=490,
+            height=440,
             width=350,  
             margin=dict({'pad':2}, l=0, r=0, t=60, b=0)
         )
@@ -616,8 +639,6 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
         )
    
     return fig_bar, fig_deviation
-
-
 
 # Callback für das Kreisdiagramm
 @app.callback(
