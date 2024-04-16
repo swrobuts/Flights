@@ -465,7 +465,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
         y='airline',
         x='cancellations',
         orientation='h',
-        color_discrete_sequence=['#7B96C4'],
+        color_discrete_sequence=['#DE5D6D'],
         text='formatted_cancellations'
     )
    
@@ -493,9 +493,9 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
             automargin=True
         ),
         plot_bgcolor='rgba(0,0,0,0)',
-        height=440,
+        height=490,
         width=550,
-        margin=dict({'pad':0}, l=0, r=0, t=30, b=0),
+        margin=dict({'pad':0}, l=0, r=0, t=60, b=0),
         bargap=0.4  # Abstand zwischen den Balken
     )
    
@@ -515,7 +515,8 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
         deviation_data = current_year_data.merge(previous_year_data, on='airline', suffixes=('_current', '_previous'), how='left')
         deviation_data['cancellations_previous'] = deviation_data['cancellations_previous'].fillna(0)
         deviation_data['deviation'] = ((deviation_data['cancellations_current'] - deviation_data['cancellations_previous']) / deviation_data['cancellations_current']) * 100
-        deviation_data['formatted_deviation'] = deviation_data['deviation'].apply(lambda x: f"{x:+.1f}%")
+        deviation_data['formatted_deviation'] = deviation_data['deviation'].apply(lambda x: f"{x:+.1f}".replace('.', ',') + '%')
+
        
         # Sortierung des Abweichungsdiagramms entsprechend der Sortierung des Balkendiagramms
         deviation_data = deviation_data.set_index('airline').reindex(cancellations_sorted['airline']).reset_index()
@@ -524,7 +525,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
        
         fig_deviation = go.Figure()
        
-        line_height = 31  # Höhe jeder Linie
+        line_height = 34.7  # Höhe jeder Linie
        
         for i, row in deviation_data.iterrows():
             color = '#DE5D6D' if row['deviation'] >= 0 else '#1F5CB0'
@@ -542,7 +543,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
                 mode='markers',
                 marker=dict(color=color, size=8),
                 hoverinfo='text',
-                hovertext=f"{row['airline']}<br># Stornos im Vorjahr: {row['cancellations_previous']:,.0f}".replace(",", "."),
+                hovertext=f"{row['airline']}<br># Stornos im Vorjahr: {row['cancellations_previous']:,.0f}".replace(".", ","),
                 showlegend=False
             ))
             fig_deviation.add_annotation(
@@ -574,14 +575,14 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
                 showgrid=False,
                 zeroline=False,
                 showticklabels=False,
-                range=[0, 440],
+                range=[0, 490],
                 title_text='',
                 automargin=True
             ),
             plot_bgcolor='rgba(0,0,0,0)',
-            height=440,
-            width=350,  # Vergrößerung der Breite des Diagramms
-            margin=dict({'pad':2}, l=0, r=0, t=30, b=0)
+            height=490,
+            width=350,  
+            margin=dict({'pad':2}, l=0, r=0, t=60, b=0)
         )
     else:
         fig_deviation = go.Figure()
