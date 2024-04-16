@@ -66,6 +66,7 @@ styles = {
 }
 
 # Layout der Dash-App
+# Layout der Dash-App
 app.layout = html.Div([
     html.Div([
         html.H3('Filter'),
@@ -130,7 +131,14 @@ app.layout = html.Div([
             ]),
             dbc.Row([
                 dbc.Col(html.Div(id='flights-table'), width=5),
-                dbc.Col(dcc.Graph(id='cancellations-bar-chart', config={'displayModeBar': False}), width=4),   
+                dbc.Col(
+                    html.Div([
+                        dcc.Graph(id='cancellations-bar-chart', config={'displayModeBar': False}),
+                        html.Div(style={'width': '15px'}),  # Platzhalter für den Abstand
+                        dcc.Graph(id='cancellations-deviation-chart', config={'displayModeBar': False})
+                    ], style={'display': 'flex'}),
+                    width=6
+                ),
                 dbc.Col(dcc.Graph(id='cancellations-pie-chart', config={'displayModeBar': False}), width=3),
             ]),
             dbc.Row([
@@ -237,8 +245,8 @@ def update_total_cancellations(selected_airline, selected_reason, selected_year,
                 ),
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                 title_text='',
-                margin=dict(l=0, r=0, t=0, b=0),
-                height=100,
+                margin=dict(l=0, r=0, t=10, b=0),
+                height=60,
                 width=250,
                 hovermode='x'
             )
@@ -265,8 +273,8 @@ def update_total_cancellations(selected_airline, selected_reason, selected_year,
             html.P(f"{total_cancellations:,.0f}".replace(",", "."), className="card-text")
         ]
 
-# Tabelle mit Sparklines
-# Callback für die Tabelle mit Sparklines
+
+#Tabelle mit Sparklines
 @app.callback(
     Output('flights-table', 'children'),
     [Input('airline-dropdown', 'value'),
@@ -286,89 +294,158 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
         filtered_data = filtered_data[filtered_data['month_int'] == int(selected_month)]
     max_flights = filtered_data['total_flights'].max()
     max_length = max([len(str(x)) for x in filtered_data['total_flights']])
-   
+
+    # Anpassung des Labels für die Flüge
+    flights_label = "Alle Flüge"
+    if selected_year != 'Alle' and selected_month == 'Alle':
+        flights_label = f"Alle Flüge in 12-{selected_year}"
+    elif selected_year != 'Alle' and selected_month != 'Alle':
+        flights_label = f"Alle Flüge in {selected_month}-{selected_year}"
+    elif selected_year != 'Alle':
+        flights_label = f"Alle Flüge in {selected_year}"
+
     table_rows = []
     for airline in filtered_data.sort_values('total_flights', ascending=False)['airline'].unique():
         airline_data = filtered_data[filtered_data['airline'] == airline]
-        monthly_totals = airline_data.groupby(['month_int', 'month', 'year'])['total_flights'].sum().reset_index()
-        hover_texts = [f"{row['month']} {row['total_flights']}" for index, row in monthly_totals.iterrows()]
         monthly_totals = airline_data.groupby(['month_int', 'month', 'year']).agg({
             'total_flights': 'sum',
             'percent of arrivals on time': 'mean',
-            'percent of departures on time': 'mean'  
+            'percent of departures on time': 'mean',  
+            'cancellation_rate_percent': 'mean'
         }).reset_index()
-       
+        hover_texts = [f"{row['month']} {row['total_flights']}" for index, row in monthly_totals.iterrows()]
+	
         sparkline_fig = go.Figure(
             go.Bar(
                 x=monthly_totals['month_int'],
                 y=monthly_totals['total_flights'],
-                hoverinfo='text+name',
-                marker=dict(color='#007bff'),
+                hoverinfo='text',
+                marker=dict(color='#7B96C4'),
                 hovertext=hover_texts,
-                width=0.75
+                width=0.6
             )
         )
         sparkline_fig.update_layout(
-            height=30,
+        hoverlabel=dict(
+            bgcolor="white",
+            font=dict(color="black")
+            ),
+            height=24,
             width=130,
-            margin=dict(l=0, r=0, t=0, b=10),
+            margin=dict(l=0, r=0, t=0, b=4),
             xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
             yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
             plot_bgcolor='rgba(255,255,255,1)',
             paper_bgcolor='rgba(255,255,255,1)'
         )
+
+        # Umwandlung des Pünktlichkeitsprozentsatzes und der Stornoquote in das gewünschte Format
+        percent_format = lambda x: "{}%".format(x.replace('.', ','))
+        cancellation_rate_formatted = percent_format(f"{monthly_totals['cancellation_rate_percent'].iloc[-1]:.1f}")
+
+    
         flights_value_formatted = f"{monthly_totals['total_flights'].iloc[-1]:{max_length},}".replace(",", ".")
         bar_width = f"{(monthly_totals['total_flights'].iloc[-1] / max_flights) * 60:.1f}%"
         flights_value_and_bar = html.Div([
             html.Div(flights_value_formatted, style={'width': f'{max_length * 7}px', 'textAlign': 'right', 'marginRight': '8px'}),
             html.Div(style={
-                'width': bar_width,
-                'height': '10px',
-                'backgroundColor': '#007bff',
-            })
+            'width': bar_width,
+            'height': '10px',
+            'backgroundColor': '#7B96C4',
+        }),
         ], style={'display': 'flex', 'width': '100%', 'alignItems': 'center', 'height': '70%'})
-        table_rows.append(html.Tr([
-            html.Td(airline, style={'width': '15%', 'paddingRight': '0px'}),  
-            html.Td(dcc.Graph(figure=sparkline_fig, config={'displayModeBar': False}), style={'width': '3%', 'paddingRight': '1px'}),
-            html.Td(flights_value_and_bar, style={'width': '12%', 'paddingRight': '8px'}),
-            html.Td(f"{monthly_totals['percent of arrivals on time'].iloc[-1]:.2f}%", style={'width': '15%'}),
-            html.Td(f"{monthly_totals['percent of departures on time'].iloc[-1]:.2f}%", style={'width': '15%'})
-        ]))
+
+        cancellation_content = html.Div(
+        style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'},
+        children=[
+            html.Span(cancellation_rate_formatted, style={'display': 'inline-block', 'textAlign': 'right', 'width': '50px'})
+        ]
+    )
     
-    # Hier wird das Label für die Flüge entsprechend den Filtereinstellungen angepasst
-    flights_label = "Alle Flüge"
-    if selected_year != 'Alle' and selected_month != 'Alle':
-        flights_label += f" in {selected_month}-{selected_year}"
-    elif selected_year != 'Alle':
-        flights_label += f" in {selected_year}"
+        arrivals_style = {'width': '20%', 'textAlign': 'center'}
+        departures_style = {'width': '20%', 'textAlign': 'center'}
+        arrivals_content = html.Div(
+        style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'},
+        children=[
+        html.Span(
+            "{}%".format(monthly_totals['percent of arrivals on time'].iloc[-1].astype(str).replace('.', ',')),
+            style={'display': 'inline-block', 'textAlign': 'right', 'width': '50px'}
+        ),
+        html.Div(
+            '',
+            style={
+                'width': '10px',
+                'height': '10px',
+                'backgroundColor': 'red' if monthly_totals['percent of departures on time'].iloc[-1] < 80 else 'transparent',
+                'borderRadius': '50%',
+                'display': 'inline-block',
+                'marginLeft': '8px'
+            }
+        )
+    ]
+)
+
+        departures_content = html.Div(
+        style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'},
+        children=[
+        html.Span(
+            "{}%".format(monthly_totals['percent of departures on time'].iloc[-1].astype(str).replace('.', ',')),
+            style={'display': 'inline-block', 'textAlign': 'right', 'width': '50px'}
+        ),
+        html.Div(
+            '',
+            style={
+                'width': '10px',
+                'height': '10px',
+                'backgroundColor': 'red' if monthly_totals['percent of departures on time'].iloc[-1] < 80 else 'transparent',
+                'borderRadius': '50%',
+                'display': 'inline-block',
+                'marginLeft': '8px'
+            }
+        )
+    ]
+)
+
+        # Füge die Zeile zur Tabelle hinzu
+        table_rows.append(html.Tr([
+            html.Td(airline, style={'width': '20%', 'paddingRight': '0px'}),
+            html.Td(dcc.Graph(figure=sparkline_fig, config={'displayModeBar': False}), style={'width': '3%', 'paddingRight': '1px'}),
+            html.Td(flights_value_and_bar, style={'width': '17%', 'paddingRight': '8px'}),
+            html.Td(arrivals_content, style=arrivals_style),
+            html.Td(departures_content, style=departures_style),
+            html.Td(cancellation_content, style={'width': '10%', 'textAlign': 'center','paddingRight': '17px',})  
+    ], style={'border-bottom': '1px solid #d3d3d3'}))
+
+    # Gib die gesamte Tabelle zurück
     return html.Table([
         html.Thead(html.Tr([
-            html.Th('Airline'),
-            html.Th(''),
-            html.Th(flights_label),
-            html.Th('Pünktlichkeit bei Ankunft'),
-            html.Th('Pünktlichkeit bei Abflug')
-        ], style={'background-color': 'white'})),
-        html.Tbody(table_rows)
+            html.Th('Airline', style={'paddingRight': '0px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
+            html.Th('', style={'paddingRight': '1px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
+            html.Th(flights_label, style={'paddingRight': '8px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
+            html.Th('⌀ Pünktlichkeit (Ankunft)', style={'paddingRight': '8px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
+            html.Th('⌀ Pünktlichkeit (Abflug)', style={'paddingRight': '8px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
+            html.Th('⌀ Stornoquote', style={'paddingRight': '1px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle', 'horizontal-align': 'center'})
+        ], style={'background-color': 'white', 'margin-bottom': '10px'})),
+        html.Tbody([
+            html.Tr([html.Td('', style={'height': '10px'}) for _ in range(5)]),  # Leere Zeile einfügen
+            *table_rows  # Bestehende Tabellenzeilen einfügen
+        ], style={'border-top': '1px solid black'})
     ], style={'font-size': '0.85rem', 'width': '100%', 'height': '70%'})
 
 
 
-
-
-
-
-
-
-# Callback für das Balkendiagramm
+# Callback für das Balkendiagramm und das Abweichungsdiagramm
 @app.callback(
-    Output('cancellations-bar-chart', 'figure'),
+    [Output('cancellations-bar-chart', 'figure'),
+     Output('cancellations-deviation-chart', 'figure')],
     [Input('airline-dropdown', 'value'),
      Input('reason-dropdown', 'value'),
      Input('year-dropdown', 'value'),
      Input('month-dropdown', 'value')]
 )
-def update_bar_chart(selected_airline, selected_reason, selected_year, selected_month):
+def update_charts(selected_airline, selected_reason, selected_year, selected_month):
+    y_shift = 21  # Verschiebung entlang der y-Achse
+   
     filtered_data = cancellations_summary.copy()
    
     if selected_airline != 'Alle':
@@ -383,7 +460,7 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
     cancellations_sorted = filtered_data.groupby('airline', as_index=False)['cancellations'].sum().sort_values(by='cancellations', ascending=True)
     cancellations_sorted['formatted_cancellations'] = cancellations_sorted['cancellations'].apply(lambda x: "{:,.0f}".format(x).replace(",", "."))
    
-    fig = px.bar(
+    fig_bar = px.bar(
         cancellations_sorted,
         y='airline',
         x='cancellations',
@@ -395,18 +472,151 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
     max_cancellations = cancellations_sorted['cancellations'].max()
     padding = max_cancellations * 0.2
    
-    fig.update_traces(textposition='outside')
-    fig.update_layout(
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0, max_cancellations + padding], title_text=''),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=True, title_text=''),
+    fig_bar.update_layout(
+        hoverlabel=dict(
+            bgcolor="white",
+            font=dict(color="black")
+        ),
+        xaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            showticklabels=False,
+            range=[0, max_cancellations + padding],
+            title_text=''
+        ),
+        yaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            showticklabels=True,
+            title_text='',
+            tickfont=dict(size=12),
+            automargin=True
+        ),
         plot_bgcolor='rgba(0,0,0,0)',
-        height=350,
-        margin=dict(l=0, r=0, t=0, b=0)
+        height=440,
+        width=550,
+        margin=dict({'pad':0}, l=0, r=0, t=30, b=0),
+        bargap=0.4  # Abstand zwischen den Balken
     )
    
-    fig.update_traces(textfont_size=11)
+    fig_bar.update_traces(textfont_size=11, textposition='outside')
    
-    return fig
+    # Berechnung der Abweichungen zum Vorjahr
+    if selected_year == 'Alle':
+        current_year = int(filtered_data['year'].max())
+    else:
+        current_year = int(selected_year)
+    previous_year = current_year - 1
+   
+    current_year_data = filtered_data[filtered_data['year'] == current_year].groupby('airline', as_index=False)['cancellations'].sum()
+    previous_year_data = cancellations_summary[cancellations_summary['year'] == previous_year].groupby('airline', as_index=False)['cancellations'].sum()
+   
+    if not previous_year_data.empty:
+        deviation_data = current_year_data.merge(previous_year_data, on='airline', suffixes=('_current', '_previous'), how='left')
+        deviation_data['cancellations_previous'] = deviation_data['cancellations_previous'].fillna(0)
+        deviation_data['deviation'] = ((deviation_data['cancellations_current'] - deviation_data['cancellations_previous']) / deviation_data['cancellations_current']) * 100
+        deviation_data['formatted_deviation'] = deviation_data['deviation'].apply(lambda x: f"{x:+.1f}%")
+       
+        # Sortierung des Abweichungsdiagramms entsprechend der Sortierung des Balkendiagramms
+        deviation_data = deviation_data.set_index('airline').reindex(cancellations_sorted['airline']).reset_index()
+       
+        max_deviation = deviation_data['deviation'].abs().max()
+       
+        fig_deviation = go.Figure()
+       
+        line_height = 31  # Höhe jeder Linie
+       
+        for i, row in deviation_data.iterrows():
+            color = '#DE5D6D' if row['deviation'] >= 0 else '#1F5CB0'
+            fig_deviation.add_shape(
+                type='line',
+                x0=0,
+                y0=i * line_height + y_shift,
+                x1=row['deviation'],
+                y1=i * line_height + y_shift,
+                line=dict(color=color, width=1.5)
+            )
+            fig_deviation.add_trace(go.Scatter(
+                x=[row['deviation']],
+                y=[i * line_height + y_shift],
+                mode='markers',
+                marker=dict(color=color, size=8),
+                hoverinfo='text',
+                hovertext=f"{row['airline']}<br># Stornos im Vorjahr: {row['cancellations_previous']:,.0f}".replace(",", "."),
+                showlegend=False
+            ))
+            fig_deviation.add_annotation(
+                x=row['deviation'],
+                y=i * line_height + y_shift,
+                text=row['formatted_deviation'],
+                showarrow=False,
+                font=dict(size=11),
+                xanchor='left' if row['deviation'] >= 0 else 'right',
+                xshift=10 if row['deviation'] >= 0 else -10,
+                yshift=0
+            )
+       
+        fig_deviation.update_layout(
+            hoverlabel=dict(
+                bgcolor="white",
+                font=dict(color="black")
+            ),
+            xaxis=dict(
+                showgrid=False,
+                zeroline=True,
+                zerolinecolor='grey',
+                zerolinewidth=0.5,
+                showticklabels=False,
+                range=[-max_deviation*1.2, max_deviation*1.2],  # Vergrößerung des Bereichs der x-Achse
+                title_text=''
+            ),
+            yaxis=dict(
+                showgrid=False,
+                zeroline=False,
+                showticklabels=False,
+                range=[0, 440],
+                title_text='',
+                automargin=True
+            ),
+            plot_bgcolor='rgba(0,0,0,0)',
+            height=440,
+            width=350,  # Vergrößerung der Breite des Diagramms
+            margin=dict({'pad':2}, l=0, r=0, t=30, b=0)
+        )
+    else:
+        fig_deviation = go.Figure()
+        fig_deviation.update_layout(
+            xaxis=dict(
+                showgrid=False,
+                zeroline=False,
+                showticklabels=False,
+                title_text=''
+            ),
+            yaxis=dict(
+                showgrid=False,
+                zeroline=False,
+                showticklabels=False,
+                title_text='',
+                automargin=True
+            ),
+            plot_bgcolor='rgba(0,0,0,0)',
+            height=440,
+            width=350,
+            margin=dict({'pad':0}, l=0, r=0, t=30, b=0),
+            annotations=[
+                dict(
+                    x=0.5,
+                    y=0.5,
+                    text="Keine Daten für das Vorjahr verfügbar",
+                    showarrow=False,
+                    font=dict(size=12)
+                )
+            ]
+        )
+   
+    return fig_bar, fig_deviation
+
+
 
 # Callback für das Kreisdiagramm
 @app.callback(
@@ -487,30 +697,33 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
     
     # Berechnung der Abweichung von 100% für "percent of arrivals on time"
     filtered_airlines['arrivals_deviation'] = 100 - filtered_airlines['percent of arrivals on time']
+    filtered_airlines['departures_deviation'] = 100 - filtered_airlines['percent of departures on time']
     
-
-
 
     fig = px.scatter(filtered_airlines,
                     x='month_int',
-                    y=['arrivals_deviation', 'cancellation_rate_percent'],
+                    y=['arrivals_deviation', 'departures_deviation'],
                     color='variable',
+                    color_discrete_map={
+                     'arrivals_deviation': '#F28E6A', 
+                     'departures_deviation': 'red'
+                    },                   
                     facet_col='airline',
                     facet_col_wrap=7,  # Setzen Sie hier die Anzahl der Spalten
                     height=530,
                     facet_col_spacing=0.01,
                     facet_row_spacing= 0.3,
-                    title='Performance der Airlines: Abweichung und Stornierungsrate')
+                    title='Performance der Airlines: Pünktlichkeit bei Ankunft und Abflug')
 
 
     # Anpassen der Markergröße und Transparenz basierend auf der Abweichung bzw. Wert
     for trace in fig.data:
         if 'arrivals_deviation' in trace.name:
-            trace['marker']['opacity'] = [0.6 + 0.4 * (1 - abs(y / 100)) for y in trace.y]
-            trace['marker']['size'] = [5 + 5 * (1 - abs(y / 100)) for y in trace.y]  # Moderate Größenanpassung
+            #trace['marker']['opacity'] = [0.7 + 0.1 * (1 - abs(y / 100)) for y in trace.y]
+            trace['marker']['size'] = [3 + 6 * (1 - abs(y / 100)) for y in trace.y]  # Moderate Größenanpassung
         else:
-            trace['marker']['opacity'] = 0.6  # Konstante Opazität für tatsächliche Stornierungsraten
-            trace['marker']['size'] = 10  # Standardgröße
+           # trace['marker']['opacity'] = 0.6  
+            trace['marker']['size'] = 8  # Standardgröße
 
     # Update für die Achseneigenschaften, um sicherzustellen, dass Monate konsistent sind
     fig.update_xaxes(tickmode='array',
@@ -530,6 +743,9 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
         margin=dict(l=20, r=0, t=60, b=20),
         #grid=dict(rows=filtered_airlines['airline'].nunique() // 3, columns=3, pattern='independent', xgap=0.2, ygap=0.8)  
     )
+
+
+    fig.update_traces(marker=dict(size=10, line=dict(color='DarkSlateGrey', width=0.5)))
 
     # Setze die y-Achse so, dass 100 das Maximum ist
     fig.update_yaxes(autorange="reversed", tickvals=[0, 20, 40, 60, 80, 100], ticktext=[100, 80, "","","",0])
