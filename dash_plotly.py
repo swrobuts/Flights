@@ -8,7 +8,6 @@ import dash_bootstrap_components as dbc
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import base64
-import kaleido
 
 # Dash-App erstellen
 app = Dash(__name__, external_stylesheets=[
@@ -30,254 +29,464 @@ month_map = {
     'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
 }
 cancellations_summary['month'] = cancellations_summary['month'].map(month_map)
+airlines_summary['month'] = airlines_summary['month'].map(month_map)
 
-# CSS-Stile definieren
 styles = {
     'sidebar': {
-        'background-color': '#f8f9fa',
-        'min-height': '100vh',
-        'padding': '20px',
         'position': 'fixed',
-        'top': 0,
-        'left': 0,
-        'bottom': 0,
-        'width': '16.67%',
-        'transition': 'transform 0.3s'
+        'top': '-350px',
+        'left': '32.5%',
+        'right': '32.5%',
+        'height': '250px',
+        'max-width': '95%',
+        'padding': '20px',
+        'background-color': '#f8f9fa',
+        'transition': 'top 0.3s ease-in-out',
+        'z-index': 1000,
+        'overflow-y': 'auto',
+        'box-shadow': '0 6px 8px rgba(0, 0, 0, 0.1)',
+    },
+    'sidebar-open': {
+        'top': '0',
+    },
+    'sidebar-header': {
+        'display': 'flex',
+        'justify-content': 'space-between',
+        'align-items': 'center',
+        'margin-bottom': '20px',
+    },
+    'sidebar-content': {
+        'display': 'flex',
+        'justify-content': 'space-between',
+    },
+    'filter-group': {
+        'flex': '1',
+        'padding': '0 3px',
+        'margin-bottom': '10px',
+    },
+    'icon-container': {
+        'position': 'fixed',
+        'top': '0px',
+        'left': '5px',
+        'display': 'flex',
+        'align-items': 'center',
+        'background-color': 'white',
+        'padding': '13px',
+        'border-radius': '65%',
+        'cursor': 'pointer',
+        'z-index': 1001,
+        'color': 'orange',  
+        'font-size': '40px', 
+    },    
+    'selected-year': {
+        'margin-left': '10px',
+        'font-size': '18px',
+        'font-weight': 'bold',  
     },
     'icon': {
-        'position': 'fixed',
-        'top': '50%',
-        'left': '16.67%',
-        'transform': 'translate(-50%, -50%)',
-        'cursor': 'pointer',
-        'font-size': '24px',
-        'color': 'red',
-        'background-color': '#f8f9fa',
-        'border-radius': '0 50% 50% 0',
-        'padding': '20px',
-        'box-shadow': '0 0 5px rgba(0, 0, 0, 0.2)',
-        'z-index': '1000',
-        'transition': 'left 0.3s'
+        'transition': 'transform 0.3s ease-in-out',
+    },
+    'icon-open': {
+        'transform': 'rotate(180deg)',
     },
     'content': {
-        'margin-left': '20%',
-        'transition': 'margin-left 0.3s'
-    }
+        'margin-top': '50px',
+        'padding': '20px',
+        'transition': 'margin-top 0.3s ease-in-out',
+    },
+    'content-open': {
+        'margin-top': '300px',
+    },
+    'container': {
+        'max-width': '100%',
+        'margin': '0 auto',
+        'padding': '0 5px',
+    },
 }
 
-# Layout der Dash-App
 app.layout = html.Div([
+    dcc.Store(id='sidebar-state', data=False),
     html.Div([
-        html.H3('Filter'),
-        dcc.Dropdown(
-            id='airline-dropdown',
-            options=[{'label': airline, 'value': airline} for airline in ['Alle'] + sorted(cancellations_summary['airline'].unique().tolist())],
-            value='Alle',
-            clearable=False
-        ),
-        dcc.Dropdown(
-            id='reason-dropdown',
-            options=[{'label': reason, 'value': reason} for reason in ['Alle'] + sorted(cancellations_summary['cancellation_reason'].unique().tolist())],
-            value='Alle',
-            clearable=False
-        ),
-        dcc.Dropdown(
-            id='year-dropdown',
-            options=[{'label': year, 'value': year} for year in sorted(cancellations_summary['year'].unique(), reverse=True)],
-            value=cancellations_summary['year'].max(),  # Setzt das höchste Jahr als Standardwert
-            clearable=False
-        ),
-        dcc.Dropdown(
-            id='month-dropdown',
-            options=[{'label': month, 'value': month} for month in ['Alle'] + sorted(cancellations_summary['month'].unique().tolist())],
-            value='Alle',
-            clearable=False
-        ),
-    ], id='sidebar', style=styles['sidebar']),
-    html.I(id="toggle-sidebar", n_clicks=0, style=styles['icon']),
-    html.Div([
-        html.H1('Dashboard für Stornierungen', className='text-center mb-4'),
         html.Div([
-            dbc.Row([
-                dbc.Col(
-                    dbc.Card(id='total-cancelled-flights-card', className="mb-4"),
-                    width=4
+            html.H3('Filter'),
+        ], style=styles['sidebar-header']),
+        html.Div([
+            html.Div([
+                dcc.Dropdown(
+                    id='airline-dropdown',
+                    options=[{'label': airline, 'value': airline} for airline in ['Alle'] + sorted(cancellations_summary['airline'].unique().tolist())],
+                    value='Alle',
+                    clearable=False,
+                    placeholder='Fluggesellschaft',
+                    style={'margin-bottom': '20px'}  # Vertikaler Abstand zwischen den Dropdown-Menüs
                 ),
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                html.H5("Durchschnittliche Stornierungen pro Fluggesellschaft", className="card-title"),
-                                html.P(id='avg-cancellations', className="card-text"),
-                            ]
-                        ),
-                        className="mb-4",
-                    ),
-                    width=4,
+                dcc.Dropdown(
+                    id='reason-dropdown',
+                    options=[{'label': reason, 'value': reason} for reason in ['Alle'] + sorted(cancellations_summary['cancellation_reason'].unique().tolist())],
+                    value='Alle',
+                    clearable=False,
+                    placeholder='Grund',
+                    style={'margin-bottom': '20px'}  # Vertikaler Abstand zwischen den Dropdown-Menüs
                 ),
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                html.H5("Stornierte Flüge", className="card-title"),
-                                html.P(id='total-cancellations', className="card-text"),
-                            ]
-                        ),
-                        className="mb-4",
-                    ),
-                    width=4,
+            ], style=styles['filter-group']),
+            html.Div([
+                dcc.Dropdown(
+                    id='year-dropdown',
+                    options=[{'label': year, 'value': year} for year in sorted(cancellations_summary['year'].unique(), reverse=True)],
+                    value=cancellations_summary['year'].max(),
+                    clearable=False,
+                    placeholder='Jahr',
+                    style={'margin-bottom': '20px'}  # Vertikaler Abstand zwischen den Dropdown-Menüs
                 ),
-            ]),
-            dbc.Row([
-                dbc.Col(html.Div(id='flights-table'), width=5),
-                dbc.Col(html.Div(style={
-                    'width': '2px',
-                    'height': '437px',
-                    'backgroundColor': '#7F7F7F',
-                    'marginTop': '"30px',  # verschiebt die Linie nach oben
-                'marginLeft': '20px'  # verschiebt die Linie nach rechts
-            }), width={'size': 0.1, 'offset': 0}),  # Trennlinie  # Vertikale Trennlinie
-                dbc.Col(
-                    html.Div([
-                        dcc.Graph(id='cancellations-bar-chart', config={'displayModeBar': False}),
-                        html.Div(style={'width': '15px'}),  # Platzhalter für den Abstand
-                        dcc.Graph(id='cancellations-deviation-chart', config={'displayModeBar': False})
-                    ], style={'display': 'flex'}),
-                    width=6
+                dcc.Dropdown(
+                    id='month-dropdown',
+                    options=[{'label': month, 'value': month} for month in ['Alle'] + sorted(cancellations_summary['month'].unique().tolist())],
+                    value='Alle',
+                    clearable=False,
+                    placeholder='Monat',
+                    style={'margin-bottom': '20px'}  # Vertikaler Abstand zwischen den Dropdown-Menüs
                 ),
-                dbc.Col(dcc.Graph(id='cancellations-pie-chart', config={'displayModeBar': False}), width=3),
-            ]),
-            dbc.Row([
-                dbc.Col(dcc.Graph(id='cancellations-sm-chart', config={'displayModeBar': False}), width=12),
-            ]),
+            ], style=styles['filter-group']),
+        ], style=styles['sidebar-content']),
+        ], id='sidebar', className='sidebar', style=styles['sidebar']),
+    html.Div([
+        html.I(id="toggle-sidebar", n_clicks=0, className='fas fa-chevron-down', style=styles['icon']),
+        html.Div(id='selected-year', style=styles['selected-year']),
+    ], style=styles['icon-container']),
+    html.Div([
+        html.H3(''),
+        html.Div(id='all-flights-year'),
+        dbc.Row([
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody([
+                        html.Div([
+                            html.Div([
+                                html.P(id='all-flights-total', className="info-main-value")
+                            ], className="info-section"),
+                            html.Div([
+                                dcc.Graph(id='all-flights-sparkline', config={'displayModeBar': False})
+                            ], className="info-section-sparkline"),
+                            html.Div([
+                                html.P(id='all-flights-diff', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'}),
+                                html.P(id='all-flights-mean', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'})
+                            ], className="info-section"),
+                        ], className="d-flex justify-content-around align-items-center info-container"),
+                    ]),
+                    className='card mb-4', style={'background-color': '#E7EFF9'}
+                ),
+                width=6
+            ),
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody([
+                        html.Div(id='all-cancellations-year'),
+                        html.Div([
+                            html.Div([
+                                html.P(id='all-cancellations-total', className="info-main-value")
+                            ]),
+                            html.Div([
+                                dcc.Graph(id='all-cancellations-sparkline', config={'displayModeBar': False})
+                            ], className="info-section-sparkline"),                           
+                            html.Div([
+                                html.P(id='all-cancellations-diff', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'}),
+                                html.P(id='all-cancellations-mean', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'})
+                            ]),
+                            html.Div([
+                                dcc.Graph(id='cancellations-pie-chart', config={'displayModeBar': False})
+                            ]), 
+                        ], className="d-flex justify-content-around align-items-center info-container"),
+                    ]),
+                    className='card mb-4', style={'background-color': '#FEECEC'}
+
+                ),
+                width=6
+            ),
+        ]),
+        dbc.Row([
+            dbc.Col(
+                html.Div(id='flights-table'),
+                width=6,
+                className='mb-2'
+            ),
+            dbc.Col(
+                dcc.Graph(id='cancellations-bar-chart', config={'displayModeBar': False}, style={'margin-left':'10px'}),
+                width=3.2
+            ),
+            html.Div(style={'width': '2%', 'height': 'auto', 'display': 'inline-block', 'visibility': 'hidden'}),
+            dbc.Col(
+                dcc.Graph(id='cancellations-deviation-chart', config={'displayModeBar': False}),
+                width=2.8
+            ),
+        ]),
+        dbc.Row([
+            dbc.Col(
+                dcc.Graph(id='cancellations-sm-chart', config={'displayModeBar': False}, style={'margin-top': '30px'}),
+                width=12
+            ),
+        ]),
+        # dbc.Row([
+        #     dbc.Col(
+        #         dcc.Graph(id='cancellations-pie-chart', config={'displayModeBar': False}),
+        #         width=6
+        #     ),
+        # ]),
+    ], id='content', className='content', style=styles['content'])
+], className='container', style=styles['container'])
+
+@app.callback(
+    Output('selected-year', 'children'),
+    [Input('year-dropdown', 'value')]
+)
+def update_selected_year(selected_year):
+    return str(selected_year)
+
+
+
+# Für Registerkarte mit Filtern
+@app.callback(
+    [Output('sidebar', 'style'),
+     Output('content', 'style'),
+     Output('toggle-sidebar', 'className'),
+     Output('sidebar-state', 'data')],
+    [Input('toggle-sidebar', 'n_clicks')],
+    [State('sidebar-state', 'data')]
+)
+def toggle_sidebar(n_clicks, sidebar_state):
+    if n_clicks:
+        if sidebar_state:
+            sidebar_style = styles['sidebar']
+            content_style = styles['content']
+            icon_class = 'fas fa-chevron-down'
+            sidebar_state = False
+        else:
+            sidebar_style = {**styles['sidebar'], **styles['sidebar-open']}
+            content_style = {**styles['content'], **styles['content-open']}
+            icon_class = 'fas fa-chevron-up'
+            sidebar_state = True
+    else:
+        sidebar_style = styles['sidebar']
+        content_style = styles['content']
+        icon_class = 'fas fa-chevron-down'
+        sidebar_state = False
+
+    return sidebar_style, content_style, icon_class, sidebar_state
+
+
+
+# Callback für die Kästchen mit den Informationen zu allen Flügen und Stornierungen
+def format_k_or_m(value):
+    if value >= 1000000:
+        return f"{value / 1000000:.1f}".replace('.', ',') + ' M'
+    elif value >= 1000:
+        return f"{value / 1000:.1f}".replace('.', ',') + ' K'
+    else:
+        return str(value)
+
+@app.callback(
+    [Output('all-flights-year', 'children'),
+    Output('all-flights-total', 'children'),
+    Output('all-flights-diff', 'children'),
+    Output('all-flights-mean', 'children'),    
+    Output('all-flights-sparkline', 'figure'),
+    Output('all-cancellations-year', 'children'),
+    Output('all-cancellations-total', 'children'),
+    Output('all-cancellations-diff', 'children'),
+    Output('all-cancellations-mean', 'children'),
+    Output('all-cancellations-sparkline', 'figure')],
+    [Input('year-dropdown', 'value')]
+)
+def update_header_boxes(selected_year):
+    flights_data = airlines_summary[airlines_summary['year'] == selected_year]
+    cancellations_data = cancellations_summary[cancellations_summary['year'] == selected_year]
+    total_flights = flights_data['total_flights'].sum()
+    total_cancellations = cancellations_data['cancellations'].sum()
+    previous_year = int(selected_year) - 1
+    previous_flights_data = airlines_summary[airlines_summary['year'] == previous_year]
+    previous_cancellations_data = cancellations_summary[cancellations_summary['year'] == previous_year]
+
+    if not previous_flights_data.empty:
+        previous_total_flights = previous_flights_data['total_flights'].sum()
+        flights_difference = total_flights - previous_total_flights
+        flights_percentage_change = (flights_difference / previous_total_flights) * 100
+        flights_arrow = '▼' if flights_difference < 0 else '▲'
+        flights_color = 'red' if flights_difference < 0 else 'green'
+
+        # Formatieren der absoluten Zahl mit Punkten als Tausendertrennzeichen
+        formatted_flights_difference = "{:+,.0f}".format(flights_difference).replace(",", "X").replace(".", ",").replace("X", ".")
+
+        # Formatieren der Prozentzahl mit Komma als Dezimaltrennzeichen
+        formatted_flights_percentage_change = "{:+.1f}".format(flights_percentage_change).replace(".", ",")
+
+        flights_diff_text = html.Span([
+            "{} ({} %) ".format(formatted_flights_difference, formatted_flights_percentage_change),
+            html.Span(flights_arrow, style={'color': flights_color})
         ])
-    ], id='content', style=styles['content'])
-])
-
-
-
-# Callback für das Ein-/Ausklappen der Sidebar
-@app.callback(
-    [Output("sidebar", "style"),
-     Output("toggle-sidebar", "style"),
-     Output("toggle-sidebar", "className"),
-     Output("content", "style")],
-    [Input("toggle-sidebar", "n_clicks")],
-    [State("sidebar", "style"),
-     State("toggle-sidebar", "style"),
-     State("content", "style")],
-)
-def toggle_sidebar(n_clicks, sidebar_style, icon_style, content_style):
-    if n_clicks % 2 == 1:
-        sidebar_style['transform'] = 'translateX(-100%)'
-        icon_style['left'] = '0'
-        content_style['margin-left'] = '0'
-        return sidebar_style, icon_style, "fas fa-chevron-right", content_style
     else:
-        sidebar_style['transform'] = 'translateX(0)'
-        icon_style['left'] = '16.67%'
-        content_style['margin-left'] = '19.67%'
-        return sidebar_style, icon_style, "fas fa-chevron-left", content_style
+        flights_diff_text = None
 
-# Callback für die Gesamtzahl der stornierten Flüge und die Kachel
-@app.callback(
-    Output('total-cancelled-flights-card', 'children'),
-    [Input('airline-dropdown', 'value'),
-     Input('reason-dropdown', 'value'),
-     Input('year-dropdown', 'value'),
-     Input('month-dropdown', 'value')]
-)
-def update_total_cancellations(selected_airline, selected_reason, selected_year, selected_month):
-    filtered_data = cancellations_summary.copy()
-   
-    if selected_airline != 'Alle':
-        filtered_data = filtered_data[filtered_data['airline'] == selected_airline]
-    if selected_reason != 'Alle':
-        filtered_data = filtered_data[filtered_data['cancellation_reason'] == selected_reason]
-    if selected_year != 'Alle':
-        filtered_data = filtered_data[filtered_data['year'] == selected_year]
-    #if selected_month != 'Alle':
-       # filtered_data = filtered_data[filtered_data['month'] == selected_month]
-   
-    total_cancellations = filtered_data['cancellations'].sum()
-   
-    if selected_year != 'Alle' and selected_month != 'Alle':
-        current_date = datetime(int(selected_year), int(selected_month), 1)
-        previous_date = current_date - relativedelta(months=1)
-        previous_data = cancellations_summary[(cancellations_summary['year'] == previous_date.year) & (cancellations_summary['month'] == previous_date.month)]
-    elif selected_year != 'Alle':
-        current_date = datetime(int(selected_year), 1, 1)
-        previous_date = current_date - relativedelta(years=1)
-        previous_data = cancellations_summary[cancellations_summary['year'] == previous_date.year]
+    if not previous_cancellations_data.empty:
+        previous_total_cancellations = previous_cancellations_data['cancellations'].sum()
+        cancellations_difference = total_cancellations - previous_total_cancellations
+        cancellations_percentage_change = (cancellations_difference / previous_total_cancellations) * 100
+        cancellations_arrow = '▼' if cancellations_difference < 0 else '▲'
+        cancellations_color = 'green' if cancellations_difference < 0 else 'red'
+
+        # Formatieren der absoluten Zahl mit Punkten als Tausendertrennzeichen
+        formatted_cancellations_difference = "{:+,.0f}".format(cancellations_difference).replace(",", "X").replace(".", ",").replace("X", ".")
+
+        # Formatieren der Prozentzahl mit Komma als Dezimaltrennzeichen
+        formatted_cancellations_percentage_change = "{:+.1f}".format(cancellations_percentage_change).replace(".", ",")
+
+        cancellations_diff_text = html.Span([
+            "{} ({}%) ".format(formatted_cancellations_difference, formatted_cancellations_percentage_change),
+            html.Span(cancellations_arrow, style={'color': cancellations_color})
+        ])
     else:
-        previous_data = pd.DataFrame()
+        cancellations_diff_text = None
+    
+    flights_sparkline_data = flights_data.groupby('month')['total_flights'].sum().reset_index()
+    cancellations_sparkline_data = cancellations_data.groupby('month')['cancellations'].sum().reset_index()
+
    
-    if not previous_data.empty:
-        previous_cancellations = previous_data['cancellations'].sum()
-        difference = total_cancellations - previous_cancellations
-        percentage_change = (difference / previous_cancellations) * 100 if previous_cancellations != 0 else 0
-       
-        if difference > 0:
-            arrow = html.Span('▲', style={'color': 'red', 'font-size': '25px'})
+    # Behandle fehlende Werte in der Spalte 'month'
+    flights_sparkline_data['month'] = flights_sparkline_data['month'].fillna(0).astype(int)
+    cancellations_sparkline_data['month'] = cancellations_sparkline_data['month'].fillna(0).astype(int)
+   
+    # Konvertiere Monatszahlen in Monatsnamen
+    flights_sparkline_data['month'] = flights_sparkline_data['month'].apply(lambda x: datetime(2000, x, 1).strftime('%b') if x != 0 else '')
+    cancellations_sparkline_data['month'] = cancellations_sparkline_data['month'].apply(lambda x: datetime(2000, x, 1).strftime('%b') if x != 0 else '')
+   
+    # Berechne den Durchschnitt pro Monat
+    flights_mean = total_flights / 12
+
+    # Berechne den Durchschnitt pro Airlines
+    cancellations_mean = total_cancellations / flights_data['airline'].nunique()
+   
+    flights_sparkline_fig = go.Figure(go.Scatter(
+        x=flights_sparkline_data['month'],
+        y=flights_sparkline_data['total_flights'],
+        mode='lines',
+        line=dict(color='#1F77B4', width=2),
+        fill='tozeroy',
+        fillcolor='rgba(31, 119, 180, 0.2)',
+        text=[f"Monat: {month}, Flüge: {format_k_or_m(value)}" for month, value in zip(flights_sparkline_data['month'], flights_sparkline_data['total_flights'])],
+        hoverinfo='text',
+        name='',
+        hovertemplate='<b>Monat</b>: %{x}<br><b>Flüge</b>: %{y}'
+    ))
+    # Hinzufügen der roten Punkte und Labels für den ersten und letzten Punkt
+    if not flights_sparkline_data.empty:
+        first_month = flights_sparkline_data.iloc[0]
+        last_month = flights_sparkline_data.iloc[-1]
+   
+        flights_sparkline_fig.add_trace(go.Scatter(
+            x=[first_month['month'], last_month['month']],
+            y=[first_month['total_flights'], last_month['total_flights']],
+            mode='markers+text',
+            marker=dict(color='red', size=8),
+            text=[format_k_or_m(first_month['total_flights']), format_k_or_m(last_month['total_flights'])],
+            textposition=["bottom center", "bottom center"],
+            showlegend=False,
+            hoverinfo='text',
+            name='',
+            hovertemplate='<b>Monat</b>: %{x}<br><b>Flüge</b>: %{y}'            
+        ))
+    flights_sparkline_fig.update_layout(
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        margin=dict(l=0, r=0, t=0, b=0),
+        height=70,
+        width=350,
+        showlegend=False
+    )
+
+    cancellations_sparkline_fig = go.Figure(go.Scatter(
+        x=cancellations_sparkline_data['month'],
+        y=cancellations_sparkline_data['cancellations'],
+        mode='lines',
+        line=dict(color='#FF7F0E', width=2),
+        fill='tozeroy',
+        fillcolor='rgba(255, 127, 14, 0.2)',
+        text=[f"Monat: {month}, Stornos: {format_k_or_m(value)}" for month, value in zip(cancellations_sparkline_data['month'], cancellations_sparkline_data['cancellations'])],
+        hoverinfo='text',
+        name='',
+        hovertemplate='<b>Monat</b>: %{x}<br><b>Stornos</b>: %{y}'
+    ))
+
+    # Hinzufügen der roten Punkte und Labels für den ersten und letzten Punkt
+    if not cancellations_sparkline_data.empty:
+        first_month = cancellations_sparkline_data.iloc[0]
+        last_month = cancellations_sparkline_data.iloc[-1]
+
+    cancellations_sparkline_fig.add_trace(go.Scatter(
+        x=[first_month['month'], last_month['month']],
+        y=[first_month['cancellations'], last_month['cancellations']],
+        mode='markers+text',
+        marker=dict(color='red', size=8),
+        text=[format_k_or_m(first_month['cancellations']), format_k_or_m(last_month['cancellations'])],
+        textposition=["bottom center", "bottom center"],
+        showlegend=False,
+        hoverinfo='text',
+        name='',
+        hovertemplate='<b>Monat</b>: %{x}<br><b>Stornos</b>: %{y}'
+    ))  
+
+    cancellations_sparkline_fig.update_layout(
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        margin=dict(l=0, r=0, t=0, b=0),
+        height=70,
+        width=350,
+        showlegend=False
+    )
+    def format_number(value):
+        if value >= 1e6:
+            return f"{value / 1e6:.1f} M"
+        elif value >= 1e3:
+            return f"{value / 1e3:.0f} K"
         else:
-            arrow = html.Span('▼', style={'color': 'green', 'font-size': '25px'})
-       
-        # Erstelle die Sparklines für die monatlichen Stornierungen
-        if selected_year != 'Alle':
-            monthly_data = filtered_data.groupby('month')['cancellations'].sum().reset_index()
-            month_names = [datetime(2000, int(m), 1).strftime('%b') for m in monthly_data['month']]
-            sparkline_fig = go.Figure(go.Bar(
-                x=month_names,
-                y=monthly_data['cancellations'],
-                marker_color='#7B96C4'
-            ))
-            sparkline_fig.update_traces(
-                text=monthly_data['cancellations'],
-                textposition='none',
-                hoverinfo='text',
-                hovertext=[f"{mon}: {val}" for mon, val in zip(month_names, monthly_data['cancellations'])]
-            )
-            sparkline_fig.update_layout(
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-                xaxis=dict(
-                    showgrid=False, 
-                    zeroline=False, 
-                    showticklabels=True, 
-                    tickmode='array', 
-                    tickvals=[month_names[0], month_names[-1]], 
-                    ticktext=[month_names[0], month_names[-1]]
-                ),
-                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                title_text='',
-                margin=dict(l=0, r=0, t=10, b=0),
-                height=60,
-                width=250,
-                hovermode='x'
-            )
-        else:
-            sparkline_fig = None
-       
-        return [
-            html.H5("Stornierte Flüge", className="card-title"),
-            html.P([
-                html.Span(f"In {selected_year}: "),
-                html.Span(f"{total_cancellations:,.0f}".replace(",", "."))
-            ], className="card-text"),
-            html.P([
-                html.Span(f"Diff. zu {previous_date.year}: "),
-                html.Span(f"{difference:,.0f} ".replace(",", ".")),
-                html.Span(f"({percentage_change:.1f} %) "),
-                arrow
-            ], className="card-text"),
-            dcc.Graph(figure=sparkline_fig, config={'displayModeBar': False}) if sparkline_fig else None
-        ]
-    else:
-        return [
-            html.H5("Stornierte Flüge", className="card-title"),
-            html.P(f"{total_cancellations:,.0f}".replace(",", "."), className="card-text")
-        ]
-
+            return f"{value:.0f}"
+    return (
+        f"",
+        html.Div([
+            html.Span(f"Flüge in {selected_year} ", style={'font-size': '14px'}),
+            html.Br(),
+            html.Span(f"{format_number(total_flights)}", style={'font-size': '32px', 'font-weight': 'bold'})
+        ], style={'margin-top': '2px'}),            
+        html.Div([
+            html.Span(f"Differenz zu {previous_year} ", style={'font-size': '14px'}),
+            html.Br(),
+            html.Span(flights_diff_text, style={'font-size': '18px', 'font-weight': 'bold'})
+        ], style={'margin-top': '2px'}),
+        html.Div([
+            html.Span(f"⌀ Anzahl Flüge pro Monat in {selected_year} ", style={'font-size': '14px'}),
+            html.Br(),
+            html.Span("{:,}".format(int(flights_mean)).replace(',', '.'), style={'font-size': '18px', 'font-weight': 'bold'})
+        ], style={'margin-top': '3px'}),
+        flights_sparkline_fig,
+        f"",
+        html.Div([
+            html.Span(f"Stornos in {selected_year} ", style={'font-size': '14px'}),
+            html.Br(),
+            html.Span(f"{format_number(total_cancellations)}", style={'font-size': '32px', 'font-weight': 'bold'})
+        ], style={'margin-top': '2px'}),            
+        html.Div([
+            html.Span(f"Differenz zu {previous_year} ", style={'font-size': '14px'}),
+            html.Br(),
+            html.Span(cancellations_diff_text, style={'font-size': '18px', 'font-weight': 'bold'})
+        ], style={'margin-top': '2px'}),
+        html.Div([
+            html.Span(f"⌀ Anzahl Stornos pro Airline in {selected_year} ", style={'font-size': '14px'}),
+            html.Br(),
+            html.Span("{:,}".format(int(cancellations_mean)).replace(',', '.'), style={'font-size': '18px', 'font-weight': 'bold'})
+        ], style={'margin-top': '3px'}),
+        cancellations_sparkline_fig
+    )
 
 #Tabelle mit Sparklines
 @app.callback(
@@ -327,7 +536,7 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
                 hoverinfo='text',
                 marker=dict(color='#7B96C4'),
                 hovertext=hover_texts,
-                width=0.6
+                width=0.65
             )
         )
         sparkline_fig.update_layout(
@@ -336,7 +545,7 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
             font=dict(color="black")
             ),
             height=24,
-            width=130,
+            width=110,
             margin=dict(l=0, r=0, t=0, b=4),
             xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
             yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
@@ -345,7 +554,7 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
         )
 
         # Umwandlung des Pünktlichkeitsprozentsatzes und der Stornoquote in das gewünschte Format
-        percent_format = lambda x: "{}%".format(x.replace('.', ','))
+        percent_format = lambda x: "{} %".format(x.replace('.', ','))
         cancellation_rate_formatted = percent_format(f"{monthly_totals['cancellation_rate_percent'].iloc[-1]:.1f}")
 
     
@@ -363,7 +572,7 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
         cancellation_content = html.Div(
         style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'},
         children=[
-            html.Span(cancellation_rate_formatted, style={'display': 'inline-block', 'textAlign': 'right', 'width': '50px'})
+            html.Span(cancellation_rate_formatted, style={'display': 'inline-block', 'textAlign': 'right', 'width': '40px'})
         ]
     )
     
@@ -373,8 +582,8 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
         style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'},
         children=[
         html.Span(
-            "{}%".format(monthly_totals['percent of arrivals on time'].iloc[-1].astype(str).replace('.', ',')),
-            style={'display': 'inline-block', 'textAlign': 'right', 'width': '50px'}
+            "{} %".format(monthly_totals['percent of arrivals on time'].iloc[-1].astype(str).replace('.', ',')),
+            style={'display': 'inline-block', 'textAlign': 'right', 'width': '40px'}
         ),
         html.Div(
             '',
@@ -394,8 +603,8 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
         style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'},
         children=[
         html.Span(
-            "{}%".format(monthly_totals['percent of departures on time'].iloc[-1].astype(str).replace('.', ',')),
-            style={'display': 'inline-block', 'textAlign': 'right', 'width': '50px'}
+            "{} %".format(monthly_totals['percent of departures on time'].iloc[-1].astype(str).replace('.', ',')),
+            style={'display': 'inline-block', 'textAlign': 'right', 'width': '40px'}
         ),
         html.Div(
             '',
@@ -413,9 +622,9 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
 
         # Füge die Zeile zur Tabelle hinzu
         table_rows.append(html.Tr([
-            html.Td(airline, style={'width': '20%', 'paddingRight': '0px'}),
+            html.Td(airline, style={'width': '19%', 'paddingRight': '0px'}),
             html.Td(dcc.Graph(figure=sparkline_fig, config={'displayModeBar': False}), style={'width': '3%', 'paddingRight': '1px'}),
-            html.Td(flights_value_and_bar, style={'width': '17%', 'paddingRight': '8px'}),
+            html.Td(flights_value_and_bar, style={'width': '15%', 'paddingRight': '8px'}),
             html.Td(arrivals_content, style=arrivals_style),
             html.Td(departures_content, style=departures_style),
             html.Td(cancellation_content, style={'width': '10%', 'textAlign': 'center','paddingRight': '17px',})  
@@ -498,7 +707,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
         ),
         plot_bgcolor='rgba(0,0,0,0)',
         height=440,
-        width=550,
+        width=650,
         margin=dict({'pad':6}, l=0, r=0, t=60, b=0),
         bargap=0.4,  # Abstand zwischen den Balken
         title=dict(
@@ -539,7 +748,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
         deviation_data = current_year_data.merge(previous_year_data, on='airline', suffixes=('_current', '_previous'), how='left')
         deviation_data['cancellations_previous'] = deviation_data['cancellations_previous'].fillna(0)
         deviation_data['deviation'] = ((deviation_data['cancellations_current'] - deviation_data['cancellations_previous']) / deviation_data['cancellations_current']) * 100
-        deviation_data['formatted_deviation'] = deviation_data['deviation'].apply(lambda x: f"{x:+.1f}".replace('.', ',') + '%')
+        deviation_data['formatted_deviation'] = deviation_data['deviation'].apply(lambda x: f"{x:+.1f}".replace('.', ',') + ' %')
        
         # Sortierung des Abweichungsdiagramms entsprechend der Sortierung des Balkendiagramms
         deviation_data = deviation_data.set_index('airline').reindex(cancellations_sorted['airline']).reset_index()
@@ -548,7 +757,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
        
         fig_deviation = go.Figure()
        
-        line_height = 35  # Höhe jeder Linie
+        line_height = 31  # Höhe jeder Linie
        
         for i, row in deviation_data.iterrows():
             color = '#DE5D6D' if row['deviation'] >= 0 else '#1F5CB0'
@@ -598,14 +807,14 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
                 showgrid=False,
                 zeroline=False,
                 showticklabels=False,
-                range=[0, 490],
+                range=[0, 440],
                 title_text='',
                 automargin=True
             ),
             plot_bgcolor='rgba(0,0,0,0)',
             height=440,
             width=350,  
-            margin=dict({'pad':2}, l=0, r=0, t=60, b=0)
+            margin=dict({'pad':1}, l=0, r=6, t=60, b=0)
         )
     else:
         fig_deviation = go.Figure()
@@ -662,7 +871,7 @@ def update_pie_chart(selected_airline, selected_reason, selected_year, selected_
    
     sorted_data = filtered_data.groupby('cancellation_reason', as_index=False)['cancellations'].sum().sort_values(by='cancellations', ascending=False)
     sorted_data['percentage'] = (sorted_data['cancellations'] / sorted_data['cancellations'].sum() * 100).round(1)
-    sorted_data['text'] = sorted_data.apply(lambda x: f"{x['cancellation_reason']}<br>{x['cancellations']:,}".replace(",", ".") + f"<br>({x['percentage']}%)", axis=1)
+    sorted_data['text'] = sorted_data.apply(lambda x: f"{x['cancellation_reason']}<br>{x['cancellations']:,}".replace(",", ".") + f"<br>({x['percentage']} %)", axis=1)
    
     grouped_data = filtered_data.groupby(['cancellation_reason', 'airline'], as_index=False)['cancellations'].sum()
     hover_texts = grouped_data.groupby('cancellation_reason').apply(
@@ -673,13 +882,14 @@ def update_pie_chart(selected_airline, selected_reason, selected_year, selected_
     final_data = final_data.merge(hover_texts, on='cancellation_reason', how='left')
    
     final_data['percentage'] = (final_data['cancellations'] / final_data['cancellations'].sum() * 100).round(1)
-    final_data['text'] = final_data.apply(lambda x: f"<b>{x['cancellation_reason']}</b><br>{x['cancellations']:,}".replace(",", ".") + f"<br>({x['percentage']} %)", axis=1)
+    final_data['text'] = final_data.apply(lambda x: f"<b>{x['cancellation_reason']}</b><br>{x['cancellations']:,}".replace(",", "."), axis=1)
    
     colors_hex = ["rgba(236, 81, 26, 0.65)", "rgba(248, 125, 7, 0.65)",
                   "rgba(255, 166, 0, 0.65)", "rgba(219, 13, 39, 0.65)"]
    
     fig = go.Figure(data=[go.Pie(labels=final_data['cancellation_reason'], values=final_data['cancellations'],
-                                 hoverinfo='label+percent', text=final_data['text'],
+                                 hoverinfo='label+percent',
+                                 text=final_data['text'],
                                  textinfo='text',
                                  marker=dict(colors=colors_hex),
                                  rotation=194,
@@ -690,7 +900,8 @@ def update_pie_chart(selected_airline, selected_reason, selected_year, selected_
    
     fig.update_traces(textfont_size=11)
    
-    fig.update_layout(height=350, width=360, showlegend=False, margin=dict(l=0, r=0, t=0, b=0))
+    fig.update_layout(height=130, width=260, showlegend=False, margin=dict(l=0, r=0, t=0, b=0), paper_bgcolor='#FEECEC')
+
    
     return fig
 
