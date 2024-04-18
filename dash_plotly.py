@@ -76,7 +76,7 @@ styles = {
         'cursor': 'pointer',
         'z-index': 1001,
         'color': 'orange',  
-        'font-size': '40px', 
+        'font-size': '40px',
     },    
     'selected-year': {
         'margin-left': '10px',
@@ -97,10 +97,28 @@ styles = {
     'content-open': {
         'margin-top': '300px',
     },
-    'container': {
+'container': {
+        'display': 'grid',
+        'grid-template-columns': '150fr', 
+        'gap': '5px',  # Setzt einen Abstand zwischen den Spalten
+        'align-items': 'stretch',
+        'height': '100vh',
         'max-width': '100%',
+        'width': '98%',
         'margin': '0 auto',
-        'padding': '0 5px',
+        'padding': '0 2px',
+    },
+    'card': {
+        'background-color': '#E7EFF9',
+        'transition': 'all 0.3s ease',
+    },
+    'card-cancellations': {
+        'background-color': '#FEECEC',
+        'transition': 'all 0.3s ease',
+    },
+    'info-main-value': {
+        'font-size': '1rem',
+        'transition': 'font-size 0.3s ease',
     },
 }
 
@@ -148,7 +166,7 @@ app.layout = html.Div([
                 ),
             ], style=styles['filter-group']),
         ], style=styles['sidebar-content']),
-        ], id='sidebar', className='sidebar', style=styles['sidebar']),
+    ], id='sidebar', className='sidebar', style=styles['sidebar']),
     html.Div([
         html.I(id="toggle-sidebar", n_clicks=0, className='fas fa-chevron-down', style=styles['icon']),
         html.Div(id='selected-year', style=styles['selected-year']),
@@ -162,7 +180,7 @@ app.layout = html.Div([
                     dbc.CardBody([
                         html.Div([
                             html.Div([
-                                html.P(id='all-flights-total', className="info-main-value")
+                                html.P(id='all-flights-total', className="info-main-value", style=styles['info-main-value'])
                             ], className="info-section"),
                             html.Div([
                                 dcc.Graph(id='all-flights-sparkline', config={'displayModeBar': False})
@@ -173,9 +191,9 @@ app.layout = html.Div([
                             ], className="info-section"),
                         ], className="d-flex justify-content-around align-items-center info-container"),
                     ]),
-                    className='card mb-4', style={'background-color': '#E7EFF9'}
+                    style={'width': '950px', 'background-color': '#E7EFF9'}
                 ),
-                width=6
+               
             ),
             dbc.Col(
                 dbc.Card(
@@ -183,54 +201,48 @@ app.layout = html.Div([
                         html.Div(id='all-cancellations-year'),
                         html.Div([
                             html.Div([
-                                html.P(id='all-cancellations-total', className="info-main-value")
+                                html.P(id='all-cancellations-total', className="info-main-value", style=styles['info-main-value'])
                             ]),
                             html.Div([
                                 dcc.Graph(id='all-cancellations-sparkline', config={'displayModeBar': False})
-                            ], className="info-section-sparkline"),                           
+                            ], className="info-section-sparkline"),                          
                             html.Div([
                                 html.P(id='all-cancellations-diff', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'}),
                                 html.P(id='all-cancellations-mean', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'})
                             ]),
                             html.Div([
                                 dcc.Graph(id='cancellations-pie-chart', config={'displayModeBar': False})
-                            ]), 
+                            ]),
                         ], className="d-flex justify-content-around align-items-center info-container"),
                     ]),
-                    className='card mb-4', style={'background-color': '#FEECEC'}
-
+                     style={'margin-left':'-220px', 'width':'1050px', 'margin-bottom': '20px', 'background-color': '#FEECEC'}
                 ),
-                width=6
+             
             ),
         ]),
         dbc.Row([
             dbc.Col(
                 html.Div(id='flights-table'),
-                width=6,
-                className='mb-2'
+                width=5,
+                className='mb'
             ),
             dbc.Col(
-                dcc.Graph(id='cancellations-bar-chart', config={'displayModeBar': False}, style={'margin-left':'10px'}),
-                width=3.2
+                dcc.Graph(id='cancellations-bar-chart', config={'displayModeBar': False}),
+                #width=4,  
+                style={'margin-left': '-20px', 'margin-right': '0px','textAlign': 'left', 'width': '550px'}  
             ),
-            html.Div(style={'width': '2%', 'height': 'auto', 'display': 'inline-block', 'visibility': 'hidden'}),
+            #html.Div(style={'width': '0.8%', 'height': 'auto', 'display': 'inline-block', 'visibility': 'hidden'}),
             dbc.Col(
                 dcc.Graph(id='cancellations-deviation-chart', config={'displayModeBar': False}),
-                width=2.8
+                style={'margin-left': '-70px', 'textAlign': 'left', 'width': '550px'}  
             ),
         ]),
         dbc.Row([
             dbc.Col(
                 dcc.Graph(id='cancellations-sm-chart', config={'displayModeBar': False}, style={'margin-top': '30px'}),
-                width=12
+                width=10
             ),
         ]),
-        # dbc.Row([
-        #     dbc.Col(
-        #         dcc.Graph(id='cancellations-pie-chart', config={'displayModeBar': False}),
-        #         width=6
-        #     ),
-        # ]),
     ], id='content', className='content', style=styles['content'])
 ], className='container', style=styles['container'])
 
@@ -241,9 +253,6 @@ app.layout = html.Div([
 def update_selected_year(selected_year):
     return str(selected_year)
 
-
-
-# Für Registerkarte mit Filtern
 @app.callback(
     [Output('sidebar', 'style'),
      Output('content', 'style'),
@@ -269,8 +278,53 @@ def toggle_sidebar(n_clicks, sidebar_state):
         content_style = styles['content']
         icon_class = 'fas fa-chevron-down'
         sidebar_state = False
-
     return sidebar_style, content_style, icon_class, sidebar_state
+
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+        <style>
+            @media screen and (max-width: 1200px) {
+                .card {
+                    height: auto;
+                }
+                .info-main-value {
+                    font-size: 1.3rem;
+                }
+            }
+            @media screen and (max-width: 992px) {
+                .card {
+                    height: auto;
+                }
+                .info-main-value {
+                    font-size: 1.1rem;
+                }
+            }
+            @media screen and (max-width: 768px) {
+                .card {
+                    height: auto;
+                }
+                .info-main-value {
+                    font-size: 1rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
 
 
 
@@ -461,12 +515,12 @@ def update_header_boxes(selected_year):
         html.Div([
             html.Span(f"Differenz zu {previous_year} ", style={'font-size': '14px'}),
             html.Br(),
-            html.Span(flights_diff_text, style={'font-size': '18px', 'font-weight': 'bold'})
+            html.Span(flights_diff_text, style={'font-size': '16px', 'font-weight': 'bold'})
         ], style={'margin-top': '2px'}),
         html.Div([
             html.Span(f"⌀ Anzahl Flüge pro Monat in {selected_year} ", style={'font-size': '14px'}),
             html.Br(),
-            html.Span("{:,}".format(int(flights_mean)).replace(',', '.'), style={'font-size': '18px', 'font-weight': 'bold'})
+            html.Span("{:,}".format(int(flights_mean)).replace(',', '.'), style={'font-size': '16px', 'font-weight': 'bold'})
         ], style={'margin-top': '3px'}),
         flights_sparkline_fig,
         f"",
@@ -478,12 +532,12 @@ def update_header_boxes(selected_year):
         html.Div([
             html.Span(f"Differenz zu {previous_year} ", style={'font-size': '14px'}),
             html.Br(),
-            html.Span(cancellations_diff_text, style={'font-size': '18px', 'font-weight': 'bold'})
+            html.Span(cancellations_diff_text, style={'font-size': '16px', 'font-weight': 'bold'})
         ], style={'margin-top': '2px'}),
         html.Div([
-            html.Span(f"⌀ Anzahl Stornos pro Airline in {selected_year} ", style={'font-size': '14px'}),
+            html.Span(f"⌀ Anzahl Stornos pro Airline", style={'font-size': '14px'}),
             html.Br(),
-            html.Span("{:,}".format(int(cancellations_mean)).replace(',', '.'), style={'font-size': '18px', 'font-weight': 'bold'})
+            html.Span("{:,}".format(int(cancellations_mean)).replace(',', '.'), style={'font-size': '16px', 'font-weight': 'bold'})
         ], style={'margin-top': '3px'}),
         cancellations_sparkline_fig
     )
@@ -576,8 +630,8 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
         ]
     )
     
-        arrivals_style = {'width': '20%', 'textAlign': 'center'}
-        departures_style = {'width': '20%', 'textAlign': 'center'}
+        arrivals_style = {'width': '15%', 'textAlign': 'center'}
+        departures_style = {'width': '15%', 'textAlign': 'center'}
         arrivals_content = html.Div(
         style={'display': 'flex', 'alignItems': 'center', 'justifyContent': 'center'},
         children=[
@@ -624,10 +678,10 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
         table_rows.append(html.Tr([
             html.Td(airline, style={'width': '19%', 'paddingRight': '0px'}),
             html.Td(dcc.Graph(figure=sparkline_fig, config={'displayModeBar': False}), style={'width': '3%', 'paddingRight': '1px'}),
-            html.Td(flights_value_and_bar, style={'width': '15%', 'paddingRight': '8px'}),
+            html.Td(flights_value_and_bar, style={'width': '15%', 'paddingRight': '2px'}),
             html.Td(arrivals_content, style=arrivals_style),
             html.Td(departures_content, style=departures_style),
-            html.Td(cancellation_content, style={'width': '10%', 'textAlign': 'center','paddingRight': '17px',})  
+            html.Td(cancellation_content, style={'width': '8%', 'textAlign': 'center','paddingRight': '1px',})  
     ], style={'border-bottom': '1px solid #d3d3d3'}))
 
     # Gib die gesamte Tabelle zurück
@@ -635,16 +689,16 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
         html.Thead(html.Tr([
             html.Th('Airline', style={'paddingRight': '0px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
             html.Th('', style={'paddingRight': '1px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
-            html.Th(flights_label, style={'paddingRight': '8px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
-            html.Th('⌀ Pünktlichkeit (Ankunft)', style={'paddingRight': '8px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
-            html.Th('⌀ Pünktlichkeit (Abflug)', style={'paddingRight': '8px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
+            html.Th(flights_label, style={'paddingRight': '2px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
+            html.Th('⌀ Pünktlichkeit (An)', style={'paddingRight': '0px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
+            html.Th('⌀ Pünktlichkeit (Ab)', style={'paddingRight': '0px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
             html.Th('⌀ Stornoquote', style={'paddingRight': '1px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle', 'horizontal-align': 'center'})
         ], style={'background-color': 'white', 'margin-bottom': '10px'})),
         html.Tbody([
             html.Tr([html.Td('', style={'height': '10px'}) for _ in range(5)]),  # Leere Zeile einfügen
             *table_rows  # Bestehende Tabellenzeilen einfügen
         ], style={'border-top': '1px solid black'})
-    ], style={'font-size': '0.85rem', 'width': '100%', 'height': '80%'})
+    ], style={'font-size': '0.85rem', 'width': '95%', 'height': '80%'})
 
 
 # Callback für das Balkendiagramm und das Abweichungsdiagramm
@@ -711,9 +765,9 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
         margin=dict({'pad':6}, l=0, r=0, t=60, b=0),
         bargap=0.4,  # Abstand zwischen den Balken
         title=dict(
-            text=f"<b>Anzahl der Stornierungen nach Airlines in {selected_year if selected_year != 'Alle' else 'allen Jahren'} und Abweichungen zu {int(selected_year)-1 if selected_year != 'Alle' else 'Vorjahr'}",
+            text=f"<b>Anzahl der Stornierungen nach Airlines in {selected_year if selected_year != 'Alle' else 'allen Jahren'}",
             font=dict(size=14),
-            x=0.49,
+            x=0.37,
             xanchor='center',
             y=0.97,
             yanchor='top'
@@ -811,6 +865,14 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
                 title_text='',
                 automargin=True
             ),
+            title=dict(
+                text=f"<b>Abweichungen zu {int(selected_year)-1 if selected_year != 'Alle' else 'Vorjahr'}",
+                font=dict(size=14),
+                x=0.49,
+                xanchor='center',
+                y=0.97,
+                yanchor='top'
+        ),
             plot_bgcolor='rgba(0,0,0,0)',
             height=440,
             width=350,  
@@ -834,7 +896,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
             ),
             plot_bgcolor='rgba(0,0,0,0)',
             height=440,
-            width=350,
+            width=300,
             margin=dict({'pad':0}, l=0, r=0, t=30, b=0),
             annotations=[
                 dict(
@@ -900,7 +962,7 @@ def update_pie_chart(selected_airline, selected_reason, selected_year, selected_
    
     fig.update_traces(textfont_size=11)
    
-    fig.update_layout(height=130, width=260, showlegend=False, margin=dict(l=0, r=0, t=0, b=0), paper_bgcolor='#FEECEC')
+    fig.update_layout(height=125, width=260, showlegend=False, margin=dict(l=0, r=0, t=0, b=0), paper_bgcolor='#FEECEC')
 
    
     return fig
