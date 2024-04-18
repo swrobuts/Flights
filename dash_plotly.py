@@ -34,10 +34,10 @@ airlines_summary['month'] = airlines_summary['month'].map(month_map)
 styles = {
     'sidebar': {
         'position': 'fixed',
-        'top': '-350px',
-        'left': '32.5%',
-        'right': '32.5%',
-        'height': '250px',
+        'top': '-250px',
+        'left': '12.5%',
+        'right': '25.5%',
+        'height': '252px',
         'max-width': '95%',
         'padding': '20px',
         'background-color': '#f8f9fa',
@@ -99,7 +99,7 @@ styles = {
     },
 'container': {
         'display': 'grid',
-        'grid-template-columns': '150fr', 
+        #'grid-template-columns': '150fr', 
         'gap': '5px',  # Setzt einen Abstand zwischen den Spalten
         'align-items': 'stretch',
         'height': '100vh',
@@ -184,14 +184,14 @@ app.layout = html.Div([
                             ], className="info-section"),
                             html.Div([
                                 dcc.Graph(id='all-flights-sparkline', config={'displayModeBar': False})
-                            ], className="info-section-sparkline"),
+                            ], style={'margin-bottom':'0px'}),   
                             html.Div([
                                 html.P(id='all-flights-diff', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'}),
                                 html.P(id='all-flights-mean', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'})
                             ], className="info-section"),
                         ], className="d-flex justify-content-around align-items-center info-container"),
                     ]),
-                    style={'width': '950px', 'background-color': '#E7EFF9'}
+                    style={'width': '850px' , 'height': '170px','background-color': '#E7EFF9', 'margin-bottom': '60px'}
                 ),
                
             ),
@@ -205,7 +205,7 @@ app.layout = html.Div([
                             ]),
                             html.Div([
                                 dcc.Graph(id='all-cancellations-sparkline', config={'displayModeBar': False})
-                            ], className="info-section-sparkline"),                          
+                            ], style={'margin-bottom':'0px'}),                          
                             html.Div([
                                 html.P(id='all-cancellations-diff', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'}),
                                 html.P(id='all-cancellations-mean', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'})
@@ -215,32 +215,29 @@ app.layout = html.Div([
                             ]),
                         ], className="d-flex justify-content-around align-items-center info-container"),
                     ]),
-                     style={'margin-left':'-220px', 'width':'1050px', 'margin-bottom': '20px', 'background-color': '#FEECEC'}
+                     style={'margin-left':'-340px', 'width':'940px', 'height': '170px', 'margin-bottom': '20px', 'background-color': '#FEECEC'}
                 ),
              
             ),
         ]),
         dbc.Row([
             dbc.Col(
-                html.Div(id='flights-table'),
-                width=5,
-                className='mb'
+                html.Div(id='flights-table')
             ),
             dbc.Col(
                 dcc.Graph(id='cancellations-bar-chart', config={'displayModeBar': False}),
-                #width=4,  
-                style={'margin-left': '-20px', 'margin-right': '0px','textAlign': 'left', 'width': '550px'}  
+                style={'margin-left': '-100px', 'margin-right': '0px','textAlign': 'left', 'width': '400px'}  
             ),
             #html.Div(style={'width': '0.8%', 'height': 'auto', 'display': 'inline-block', 'visibility': 'hidden'}),
             dbc.Col(
                 dcc.Graph(id='cancellations-deviation-chart', config={'displayModeBar': False}),
-                style={'margin-left': '-70px', 'textAlign': 'left', 'width': '550px'}  
+                style={'margin-left': '-350px', 'textAlign': 'left', 'width': '300px'}  
             ),
         ]),
         dbc.Row([
             dbc.Col(
-                dcc.Graph(id='cancellations-sm-chart', config={'displayModeBar': False}, style={'margin-top': '30px'}),
-                width=10
+                dcc.Graph(id='cancellations-sm-chart', config={'displayModeBar': False}, style={'margin-left': '-20px', 'width':'1850px'}),
+                
             ),
         ]),
     ], id='content', className='content', style=styles['content'])
@@ -280,51 +277,6 @@ def toggle_sidebar(n_clicks, sidebar_state):
         sidebar_state = False
     return sidebar_style, content_style, icon_class, sidebar_state
 
-app.index_string = '''
-<!DOCTYPE html>
-<html>
-    <head>
-        {%metas%}
-        <title>{%title%}</title>
-        {%favicon%}
-        {%css%}
-        <style>
-            @media screen and (max-width: 1200px) {
-                .card {
-                    height: auto;
-                }
-                .info-main-value {
-                    font-size: 1.3rem;
-                }
-            }
-            @media screen and (max-width: 992px) {
-                .card {
-                    height: auto;
-                }
-                .info-main-value {
-                    font-size: 1.1rem;
-                }
-            }
-            @media screen and (max-width: 768px) {
-                .card {
-                    height: auto;
-                }
-                .info-main-value {
-                    font-size: 1rem;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        {%app_entry%}
-        <footer>
-            {%config%}
-            {%scripts%}
-            {%renderer%}
-        </footer>
-    </body>
-</html>
-'''
 
 
 
@@ -449,10 +401,17 @@ def update_header_boxes(selected_year):
     flights_sparkline_fig.update_layout(
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            xaxis=dict(
+        showgrid=False,
+        zeroline=False,
+        showticklabels=True,
+        tickvals=[flights_sparkline_data['month'].iloc[0], flights_sparkline_data['month'].iloc[-1]],
+        ticktext=['Jan', 'Dez'],
+        tickfont=dict(size=10)
+    ),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         margin=dict(l=0, r=0, t=0, b=0),
-        height=70,
+        height=90,
         width=350,
         showlegend=False
     )
@@ -491,10 +450,17 @@ def update_header_boxes(selected_year):
     cancellations_sparkline_fig.update_layout(
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            xaxis=dict(
+        showgrid=False,
+        zeroline=False,
+        showticklabels=True,
+        tickvals=[cancellations_sparkline_data['month'].iloc[0], cancellations_sparkline_data['month'].iloc[-1]],
+        ticktext=['Jan', 'Dez'],
+        tickfont=dict(size=10)
+    ),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         margin=dict(l=0, r=0, t=0, b=0),
-        height=70,
+        height=90,
         width=350,
         showlegend=False
     )
@@ -690,15 +656,15 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
             html.Th('Airline', style={'paddingRight': '0px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
             html.Th('', style={'paddingRight': '1px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
             html.Th(flights_label, style={'paddingRight': '2px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
-            html.Th('⌀ Pünktlichkeit (An)', style={'paddingRight': '0px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
-            html.Th('⌀ Pünktlichkeit (Ab)', style={'paddingRight': '0px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
-            html.Th('⌀ Stornoquote', style={'paddingRight': '1px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle', 'horizontal-align': 'center'})
+            html.Th('⌀ Pünktlich (Ankunft)', style={'paddingRight': '0px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
+            html.Th('⌀ Pünktlich (Abflug)', style={'paddingRight': '0px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
+            html.Th('⌀ Storniert', style={'paddingRight': '1px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle', 'horizontal-align': 'center'})
         ], style={'background-color': 'white', 'margin-bottom': '10px'})),
         html.Tbody([
             html.Tr([html.Td('', style={'height': '10px'}) for _ in range(5)]),  # Leere Zeile einfügen
             *table_rows  # Bestehende Tabellenzeilen einfügen
         ], style={'border-top': '1px solid black'})
-    ], style={'font-size': '0.85rem', 'width': '95%', 'height': '80%'})
+    ], style={'font-size': '0.85rem', 'width': '850px', 'height': '80%'})
 
 
 # Callback für das Balkendiagramm und das Abweichungsdiagramm
@@ -767,7 +733,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
         title=dict(
             text=f"<b>Anzahl der Stornierungen nach Airlines in {selected_year if selected_year != 'Alle' else 'allen Jahren'}",
             font=dict(size=14),
-            x=0.37,
+            x=0.28,
             xanchor='center',
             y=0.97,
             yanchor='top'
@@ -876,7 +842,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
             plot_bgcolor='rgba(0,0,0,0)',
             height=440,
             width=350,  
-            margin=dict({'pad':1}, l=0, r=6, t=60, b=0)
+            margin=dict({'pad':1}, l=0, r=30, t=57, b=0)
         )
     else:
         fig_deviation = go.Figure()
@@ -979,7 +945,6 @@ import plotly.express as px
 )
 def update_bar_chart(selected_airline, selected_reason, selected_year, selected_month):
     filtered_airlines = airlines_summary.copy()
-
     # Anwendung der Filter
     if selected_airline != 'Alle':
         filtered_airlines = filtered_airlines[filtered_airlines['airline'] == selected_airline]
@@ -989,62 +954,94 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
         filtered_airlines = filtered_airlines[filtered_airlines['year'] == selected_year]
     if selected_month != 'Alle':
         filtered_airlines = filtered_airlines[filtered_airlines['month_int'] == selected_month]
-    
+   
     # Berechnung der Abweichung von 100% für "percent of arrivals on time"
     filtered_airlines['arrivals_deviation'] = 100 - filtered_airlines['percent of arrivals on time']
     filtered_airlines['departures_deviation'] = 100 - filtered_airlines['percent of departures on time']
-    
-
+   
     fig = px.scatter(filtered_airlines,
                     x='month_int',
                     y=['arrivals_deviation', 'departures_deviation'],
                     color='variable',
                     color_discrete_map={
-                     'arrivals_deviation': '#F28E6A', 
+                     'arrivals_deviation': '#F28E6A',
                      'departures_deviation': 'red'
-                    },                   
+                    },                  
                     facet_col='airline',
-                    facet_col_wrap=7,  # Setzen Sie hier die Anzahl der Spalten
-                    height=530,
+                    facet_col_wrap=7,  
+                    height=550,
                     facet_col_spacing=0.01,
-                    facet_row_spacing= 0.3,
-                    title='Performance der Airlines: Pünktlichkeit bei Ankunft und Abflug')
-
-
+                    facet_row_spacing= 0.35,
+                    #labels={'airline':''}
+    )
     # Anpassen der Markergröße und Transparenz basierend auf der Abweichung bzw. Wert
     for trace in fig.data:
         if 'arrivals_deviation' in trace.name:
-            #trace['marker']['opacity'] = [0.7 + 0.1 * (1 - abs(y / 100)) for y in trace.y]
-            trace['marker']['size'] = [3 + 6 * (1 - abs(y / 100)) for y in trace.y]  # Moderate Größenanpassung
+            trace['marker']['opacity'] = [0.7 if y <= 20 else 0.8 + 0.2 * (100 - y) / 80 for y in trace.y]
+            trace['marker']['size'] = [7 if y <= 20 else 10 + 10 * (y - 20) / 80 for y in trace.y]
+            
         else:
-           # trace['marker']['opacity'] = 0.6  
-            trace['marker']['size'] = 8  # Standardgröße
-
-    # Update für die Achseneigenschaften, um sicherzustellen, dass Monate konsistent sind
-    fig.update_xaxes(tickmode='array',
-                        tickvals=[filtered_airlines['month_int'].min(),
-                        filtered_airlines['month_int'].max()],
-                        ticktext=[filtered_airlines.loc[filtered_airlines['month_int'].idxmin(), 'month'], filtered_airlines.loc[filtered_airlines['month_int'].idxmax(), 'month']],
-                        showticklabels=True,
-                        linecolor='grey', 
-                        title_text='')
-    fig.update_yaxes(title_text='') 
-
+            trace['marker']['opacity'] = [0.9 if y <= 20 else 0.7 + 0.2 * (100 - y) / 80 for y in trace.y]
+            trace['marker']['size'] = [7 if y <= 20 else 10 + 10 * (y - 20) / 80 for y in trace.y]
+    
+    # Anpassung der x-Achse basierend auf der Auswahl im Monatsfilter
+    if selected_month != 'Alle':
+        month_name = {1: 'Jan', 2: 'Feb', 3: 'Mrz', 4: 'Apr', 5: 'Mai', 6: 'Jun',
+                      7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Okt', 11: 'Nov', 12: 'Dez'}[selected_month]
+        fig.update_xaxes(tickmode='array',
+                         tickvals=[selected_month],
+                         ticktext=[month_name],
+                         showticklabels=True,
+                         linecolor='grey',
+                         title_text='')
+    else:
+        fig.update_xaxes(tickmode='array',
+                         tickvals=[filtered_airlines['month_int'].min(),
+                                   filtered_airlines['month_int'].max()],
+                         ticktext=['Jan', 'Dez'],
+                         showticklabels=True,
+                         linecolor='grey',
+                         title_text='')
+    
+    fig.update_yaxes(title_text='')
+    for trace in fig.data:
+        if trace.name == 'arrivals_deviation':
+            trace.name = 'Pünktlich bei Ankunft'
+        elif trace.name == 'departures_deviation':
+            trace.name = 'Pünktlich bei Abflug'
     # Einstellung des Layouts für weißen Hintergrund und Legende
     fig.update_layout(
-        plot_bgcolor='rgba(255, 255, 255, 1)',
-        paper_bgcolor='rgba(255, 255, 255, 1)',
+        margin=dict(l=0, r=0, t=120, b=0),  # Randdefinition: links, rechts, oben, unten
+        plot_bgcolor='rgba(255, 255, 255, 1)',  # Korrekter RGBA-Wert für einen weißen Hintergrund
+        paper_bgcolor='rgba(255, 255, 255, 1)',  # Ebenfalls weißer Hintergrund
         showlegend=True,
-        margin=dict(l=20, r=0, t=60, b=20),
-        #grid=dict(rows=filtered_airlines['airline'].nunique() // 3, columns=3, pattern='independent', xgap=0.2, ygap=0.8)  
+        legend_title='',
+        legend=dict(
+            orientation='h',  # Horizontale Ausrichtung der Legende
+            yanchor='bottom',
+            y=1.1,  
+            xanchor='left',
+            x=-0.01,
+           itemsizing='constant'  # Gleichbleibende Größe der Legenden-Symbole
+        ),
+        title=dict(  # Korrektur für die Eröffnungsklammer von dict
+            text='<b>Performance der Airlines: Pünktlichkeit bei Ankunft und Abflug</b>',  # HTML-Tag für Fettschrift und korrekter Abschluss des Texts
+            font=dict(
+                size=14,  # Schriftgröße für den Titel
+                family="Arial, sans-serif",  # Schriftart für den Titel
+                color="black"  # Schriftfarbe
+            ),
+            y=0.95,  # Vertikale Position des Titels
+            x=0.009,  # Horizontale Position des Titels
+            xanchor='left',  # Ausrichtung des Titels
+            yanchor='top'  # Vertikale Ankerung des Titels
     )
-
-
-    fig.update_traces(marker=dict(size=10, line=dict(color='DarkSlateGrey', width=0.5)))
-
+)
+       
+   
+    fig.update_traces(marker=dict(line=dict(color='DarkSlateGrey', width=0.5)))
     # Setze die y-Achse so, dass 100 das Maximum ist
     fig.update_yaxes(autorange="reversed", tickvals=[0, 20, 40, 60, 80, 100], ticktext=[100, 80, "","","",0])
-
     # Füge für jede Facette spezielle Linien hinzu
     for i in range(1, len(filtered_airlines['airline'].unique()) + 1):
         # Grüne Linie bei y=0 (entspricht 100% Optimum)
@@ -1061,6 +1058,26 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
                 width=2
             )
         )
+        fig.add_annotation(
+        x=filtered_airlines['month_int'].min()-1,  # Anfang des x-Bereichs für jede Facette
+        y=35,  # Y-Position für den Pfeil, muss eventuell angepasst werden
+        text="schlechter",
+          textangle=-90,  # Der Text der Annotation,
+        showarrow=False,  # Zeigt den Pfeil
+        arrowhead=2,  # Stil des Pfeilkopfes
+        xref=f"x{i}",  # x-Referenz auf die entsprechende Facettenachse
+        yref=f"y{i}",  # y-Referenz auf die entsprechende Facettenachse
+        ax=-3,  # Verschiebung des Pfeils in x-Richtung (links)
+        ay=20,  # Verschiebung des Pfeils in y-Richtung (nach unten)
+        arrowcolor="red",  # Farbe des Pfeils
+        font=dict(
+            family="Arial, sans-serif",
+            size=12,
+            color="black"
+        ),
+        arrowsize=1,  # Größe des Pfeils, kann skaliert werden
+        arrowwidth=2,  # Breite des Pfeilstrichs
+    )
         # Rote gepunktete Linie bei y=20 (entspricht 80% Schwellenwert)
         fig.add_shape(
             type="line",
@@ -1076,7 +1093,6 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
                 dash="dot"
             )
         )
-
     return fig
 
 
