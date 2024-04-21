@@ -31,6 +31,7 @@ month_map = {
 cancellations_summary['month'] = cancellations_summary['month'].map(month_map)
 airlines_summary['month'] = airlines_summary['month'].map(month_map)
 
+# App-Layout
 styles = {
     'sidebar': {
         'position': 'fixed',
