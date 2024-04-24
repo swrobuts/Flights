@@ -1,6 +1,15 @@
 import dash
-from dash import Dash, dcc, html
+
+# Dash-App erstellen
+dash.register_page(__name__, path="/", external_stylesheets=[
+    'https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css'
+])
+
+
+from dash import Dash, dcc, html, callback
 from dash.dependencies import Input, Output, State
+from dash.exceptions import PreventUpdate
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
@@ -9,15 +18,12 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import base64
 
-# Dash-App erstellen
-app = Dash(__name__, external_stylesheets=[
-    'https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css'
-])
+
 
 # URL zur CSV-Datei
 URL = "https://media.githubusercontent.com/media/swrobuts/Flights/main/cancellations_summary.csv"
 URL2 = "https://media.githubusercontent.com/media/swrobuts/Flights/main/airliness_summary.csv"
+
 
 # Lese die CSV-Datei ein
 cancellations_summary = pd.read_csv(URL)
@@ -35,54 +41,58 @@ airlines_summary['month'] = airlines_summary['month'].map(month_map)
 styles = {
     'sidebar': {
         'position': 'fixed',
-        'top': '-250px',
+        'top': '-300px',
         'left': '12.5%',
         'right': '25.5%',
         'height': '252px',
-        'max-width': '95%',
+        'maxWidth': '95%',
         'padding': '20px',
-        'background-color': '#f8f9fa',
+        'backgroundColor':
+        '#f8f9fa',
         'transition': 'top 0.3s ease-in-out',
-        'z-index': 1000,
-        'overflow-y': 'auto',
-        'box-shadow': '0 6px 8px rgba(0, 0, 0, 0.1)',
+        'zIndex': 1000,
+        'overflowY': 'auto',
+        'boxShadow': '0 6px 8px rgba(0, 0, 0, 0.1)'
     },
     'sidebar-open': {
         'top': '0',
     },
     'sidebar-header': {
         'display': 'flex',
-        'justify-content': 'space-between',
-        'align-items': 'center',
-        'margin-bottom': '20px',
+        'justifyContent': 'space-between',
+        'alignItems': 'center',
+        'marginBottom': '20px',
     },
     'sidebar-content': {
         'display': 'flex',
-        'justify-content': 'space-between',
+        'justifyContent': 'space-between',
     },
     'filter-group': {
         'flex': '1',
         'padding': '0 3px',
-        'margin-bottom': '10px',
+        'marginBottom': '10px',
     },
     'icon-container': {
         'position': 'fixed',
-        'top': '0px',
-        'left': '5px',
+        'top': '8px',  
+        'left': '20px',  
         'display': 'flex',
-        'align-items': 'center',
-        'background-color': 'white',
-        'padding': '13px',
-        'border-radius': '65%',
+        'alignItems': 'center',
+        'backgroundColor': '',
+        'padding': '0px',  
+        'borderRadius': '50%',  
         'cursor': 'pointer',
-        'z-index': 1001,
-        'color': 'orange',  
-        'font-size': '40px',
-    },    
+        'zIndex': 1030,  
+        'color': 'orange',
+        'fontSize': '35px', 
+        'width': '35px',
+        'height': '35px' 
+        },    
     'selected-year': {
-        'margin-left': '10px',
-        'font-size': '18px',
-        'font-weight': 'bold',  
+        'marginLeft': '10px',
+        'fontSize': '20px',
+        'fontWeight': 'bold',  
+        'fontColor': 'orange'
     },
     'icon': {
         'transition': 'transform 0.3s ease-in-out',
@@ -91,40 +101,39 @@ styles = {
         'transform': 'rotate(180deg)',
     },
     'content': {
-        'margin-top': '50px',
+        'marginTop': '50px',
         'padding': '20px',
-        'transition': 'margin-top 0.3s ease-in-out',
+        'transition': 'marginTop 0.3s ease-in-out',
     },
     'content-open': {
-        'margin-top': '300px',
+        'marginTop': '300px',
     },
 'container': {
         'display': 'grid',
-        #'grid-template-columns': '150fr', 
-        'gap': '5px',  # Setzt einen Abstand zwischen den Spalten
-        'align-items': 'stretch',
+        'gap': '5px',  
+        'alignItems': 'stretch',
         'height': '100vh',
-        'max-width': '100%',
+        'maxWidth': '100%',
         'width': '98%',
         'margin': '0 auto',
         'padding': '0 2px',
     },
     'card': {
-        'background-color': '#E7EFF9',
+        'backgroundColor': '#E7EFF9',
         'transition': 'all 0.3s ease',
     },
     'card-cancellations': {
-        'background-color': '#FEECEC',
+        'backgroundColor': '#FEECEC',
         'transition': 'all 0.3s ease',
     },
     'info-main-value': {
-        'font-size': '1rem',
-        'transition': 'font-size 0.3s ease',
+        'fontSize': '1rem',
+        'transition': 'fontSize 0.3s ease',
     },
 }
 
-app.layout = html.Div([
-    dcc.Store(id='sidebar-state', data=False),
+layout = html.Div([
+    dcc.Store(id='sidebar-toggle-state', data={'open': False}), 
     html.Div([
         html.Div([
             html.H3('Filter'),
@@ -137,7 +146,7 @@ app.layout = html.Div([
                     value='Alle',
                     clearable=False,
                     placeholder='Fluggesellschaft',
-                    style={'margin-bottom': '20px'}  # Vertikaler Abstand zwischen den Dropdown-Menüs
+                    style={'marginBottom': '20px'}  
                 ),
                 dcc.Dropdown(
                     id='reason-dropdown',
@@ -145,7 +154,7 @@ app.layout = html.Div([
                     value='Alle',
                     clearable=False,
                     placeholder='Grund',
-                    style={'margin-bottom': '20px'}  # Vertikaler Abstand zwischen den Dropdown-Menüs
+                    style={'marginBottom': '20px'}  
                 ),
             ], style=styles['filter-group']),
             html.Div([
@@ -155,7 +164,7 @@ app.layout = html.Div([
                     value=cancellations_summary['year'].max(),
                     clearable=False,
                     placeholder='Jahr',
-                    style={'margin-bottom': '20px'}  # Vertikaler Abstand zwischen den Dropdown-Menüs
+                    style={'marginBottom': '20px'}  
                 ),
                 dcc.Dropdown(
                     id='month-dropdown',
@@ -163,13 +172,13 @@ app.layout = html.Div([
                     value='Alle',
                     clearable=False,
                     placeholder='Monat',
-                    style={'margin-bottom': '20px'}  # Vertikaler Abstand zwischen den Dropdown-Menüs
+                    style={'marginBottom': '20px'}  # Vertikaler Abstand zwischen den Dropdown-Menüs
                 ),
             ], style=styles['filter-group']),
         ], style=styles['sidebar-content']),
     ], id='sidebar', className='sidebar', style=styles['sidebar']),
     html.Div([
-        html.I(id="toggle-sidebar", n_clicks=0, className='fas fa-chevron-down', style=styles['icon']),
+        html.I(id="toggle-sidebar", n_clicks=0, children=""),
         html.Div(id='selected-year', style=styles['selected-year']),
     ], style=styles['icon-container']),
     html.Div([
@@ -185,14 +194,14 @@ app.layout = html.Div([
                             ], className="info-section"),
                             html.Div([
                                 dcc.Graph(id='all-flights-sparkline', config={'displayModeBar': False})
-                            ], style={'margin-bottom':'0px'}),   
+                            ], style={'marginBottom':'0px', 'marginLeft': '30px'}),   
                             html.Div([
-                                html.P(id='all-flights-diff', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'}),
-                                html.P(id='all-flights-mean', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'})
+                                html.P(id='all-flights-diff', className="info-diff", style={'fontFamily': 'Arial, sans-serif', 'fontSize': '14px', 'lineHeight': '1.5', 'marginLeft': '30px'}),
+                                html.P(id='all-flights-mean', className="info-diff", style={'fontFamily': 'Arial, sans-serif', 'fontSize': '14px', 'lineHeight': '1.5', 'marginLeft': '30px'})
                             ], className="info-section"),
-                        ], className="d-flex justify-content-around align-items-center info-container"),
+                        ], className="d-flex justifyContent-around alignItems-center info-container"),
                     ]),
-                    style={'width': '850px' , 'height': '170px','background-color': '#E7EFF9', 'margin-bottom': '60px'}
+                    style={'width': '850px' , 'height': '170px','backgroundColor': '#E7EFF9', 'marginBottom': '30px'}
                 ),
                
             ),
@@ -206,17 +215,17 @@ app.layout = html.Div([
                             ]),
                             html.Div([
                                 dcc.Graph(id='all-cancellations-sparkline', config={'displayModeBar': False})
-                            ], style={'margin-bottom':'0px'}),                          
+                            ], style={'marginBottom':'0px'}),                          
                             html.Div([
-                                html.P(id='all-cancellations-diff', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'}),
-                                html.P(id='all-cancellations-mean', className="info-diff", style={'font-family': 'Arial, sans-serif', 'font-size': '14px', 'line-height': '1.5'})
+                                html.P(id='all-cancellations-diff', className="info-diff", style={'fontFamily': 'Arial, sans-serif', 'fontSize': '14px', 'lineHeight': '1.5'}),
+                                html.P(id='all-cancellations-mean', className="info-diff", style={'fontFamily': 'Arial, sans-serif', 'fontSize': '14px', 'lineHeight': '1.5'})
                             ]),
                             html.Div([
                                 dcc.Graph(id='cancellations-pie-chart', config={'displayModeBar': False})
                             ]),
-                        ], className="d-flex justify-content-around align-items-center info-container"),
+                        ], className="d-flex justifyContent-around alignItems-center info-container"),
                     ]),
-                     style={'margin-left':'-340px', 'width':'940px', 'height': '170px', 'margin-bottom': '20px', 'background-color': '#FEECEC'}
+                     style={'marginLeft':'-340px', 'width':'940px', 'height': '170px', 'marginBottom': '20px', 'backgroundColor': '#FEECEC'}
                 ),
              
             ),
@@ -227,56 +236,63 @@ app.layout = html.Div([
             ),
             dbc.Col(
                 dcc.Graph(id='cancellations-bar-chart', config={'displayModeBar': False}),
-                style={'margin-left': '-100px', 'margin-right': '0px','textAlign': 'left', 'width': '400px'}  
+                style={'marginLeft': '-100px', 'marginRight': '0px','textAlign': 'left', 'width': '400px'}  
             ),
             #html.Div(style={'width': '0.8%', 'height': 'auto', 'display': 'inline-block', 'visibility': 'hidden'}),
             dbc.Col(
                 dcc.Graph(id='cancellations-deviation-chart', config={'displayModeBar': False}),
-                style={'margin-left': '-350px', 'textAlign': 'left', 'width': '300px'}  
+                style={'marginLeft': '-350px', 'textAlign': 'left', 'width': '300px'}  
             ),
         ]),
         dbc.Row([
             dbc.Col(
-                dcc.Graph(id='cancellations-sm-chart', config={'displayModeBar': False}, style={'margin-left': '-20px', 'width':'1850px'}),
+                dcc.Graph(id='cancellations-sm-chart', config={'displayModeBar': False}, style={'marginLeft': '-20px', 'width':'1850px'}),
                 
             ),
         ]),
     ], id='content', className='content', style=styles['content'])
 ], className='container', style=styles['container'])
 
-@app.callback(
+@callback(
     Output('selected-year', 'children'),
     [Input('year-dropdown', 'value')]
 )
 def update_selected_year(selected_year):
     return str(selected_year)
 
-@app.callback(
+
+# Callback zur Aktualisierung des Sidebar-Zustands
+@callback(
+    Output('sidebar-toggle-state', 'data'),
+    Input('toggle-sidebar', 'n_clicks'),
+    State('sidebar-toggle-state', 'data'),
+    prevent_initial_call=True
+)
+def update_sidebar_state(n_clicks, data):
+    if not n_clicks:
+        raise PreventUpdate
+    data['open'] = not data['open']
+    return data
+
+@callback(
     [Output('sidebar', 'style'),
      Output('content', 'style'),
-     Output('toggle-sidebar', 'className'),
-     Output('sidebar-state', 'data')],
-    [Input('toggle-sidebar', 'n_clicks')],
-    [State('sidebar-state', 'data')]
+     Output('toggle-sidebar', 'children')],
+    Input('sidebar-toggle-state', 'data')
 )
-def toggle_sidebar(n_clicks, sidebar_state):
-    if n_clicks:
-        if sidebar_state:
-            sidebar_style = styles['sidebar']
-            content_style = styles['content']
-            icon_class = 'fas fa-chevron-down'
-            sidebar_state = False
-        else:
-            sidebar_style = {**styles['sidebar'], **styles['sidebar-open']}
-            content_style = {**styles['content'], **styles['content-open']}
-            icon_class = 'fas fa-chevron-up'
-            sidebar_state = True
-    else:
-        sidebar_style = styles['sidebar']
-        content_style = styles['content']
-        icon_class = 'fas fa-chevron-down'
-        sidebar_state = False
-    return sidebar_style, content_style, icon_class, sidebar_state
+def apply_sidebar_state(data):
+    sidebar_style = styles['sidebar']
+    content_style = styles['content']
+    # Setze ein einfaches Unicode-Zeichen für den geschlossenen Zustand
+    icon_text = '▼'  
+
+    if data and data['open']:
+        sidebar_style = {**styles['sidebar'], **styles['sidebar-open']}
+        content_style = {**styles['content'], **styles['content-open']}
+        # Setze ein anderes Unicode-Zeichen für den geöffneten Zustand
+        icon_text = '▲'
+
+    return sidebar_style, content_style, icon_text
 
 
 
@@ -290,7 +306,7 @@ def format_k_or_m(value):
     else:
         return str(value)
 
-@app.callback(
+@callback(
     [Output('all-flights-year', 'children'),
     Output('all-flights-total', 'children'),
     Output('all-flights-diff', 'children'),
@@ -475,42 +491,42 @@ def update_header_boxes(selected_year):
     return (
         f"",
         html.Div([
-            html.Span(f"Flüge in {selected_year} ", style={'font-size': '14px'}),
+            html.Span(f"Flüge in {selected_year} ", style={'fontSize': '14px'}),
             html.Br(),
-            html.Span(f"{format_number(total_flights)}", style={'font-size': '32px', 'font-weight': 'bold'})
-        ], style={'margin-top': '2px'}),            
+            html.Span(f"{format_number(total_flights)}", style={'fontSize': '32px', 'fontWeight': 'bold'})
+        ], style={'marginTop': '2px'}),            
         html.Div([
-            html.Span(f"Differenz zu {previous_year} ", style={'font-size': '14px'}),
+            html.Span(f"Differenz zu {previous_year} ", style={'fontSize': '14px'}),
             html.Br(),
-            html.Span(flights_diff_text, style={'font-size': '16px', 'font-weight': 'bold'})
-        ], style={'margin-top': '2px'}),
+            html.Span(flights_diff_text, style={'fontSize': '16px', 'fontWeight': 'bold'})
+        ], style={'marginTop': '2px'}),
         html.Div([
-            html.Span(f"⌀ Anzahl Flüge pro Monat in {selected_year} ", style={'font-size': '14px'}),
+            html.Span(f"⌀ Anzahl Flüge pro Monat in {selected_year} ", style={'fontSize': '14px'}),
             html.Br(),
-            html.Span("{:,}".format(int(flights_mean)).replace(',', '.'), style={'font-size': '16px', 'font-weight': 'bold'})
-        ], style={'margin-top': '3px'}),
+            html.Span("{:,}".format(int(flights_mean)).replace(',', '.'), style={'fontSize': '16px', 'fontWeight': 'bold'})
+        ], style={'marginTop': '3px'}),
         flights_sparkline_fig,
         f"",
         html.Div([
-            html.Span(f"Stornos in {selected_year} ", style={'font-size': '14px'}),
+            html.Span(f"Stornos in {selected_year} ", style={'fontSize': '14px'}),
             html.Br(),
-            html.Span(f"{format_number(total_cancellations)}", style={'font-size': '32px', 'font-weight': 'bold'})
-        ], style={'margin-top': '2px'}),            
+            html.Span(f"{format_number(total_cancellations)}", style={'fontSize': '32px', 'fontWeight': 'bold'})
+        ], style={'marginTop': '2px'}),            
         html.Div([
-            html.Span(f"Differenz zu {previous_year} ", style={'font-size': '14px'}),
+            html.Span(f"Differenz zu {previous_year} ", style={'fontSize': '14px'}),
             html.Br(),
-            html.Span(cancellations_diff_text, style={'font-size': '16px', 'font-weight': 'bold'})
-        ], style={'margin-top': '2px'}),
+            html.Span(cancellations_diff_text, style={'fontSize': '16px', 'fontWeight': 'bold'})
+        ], style={'marginTop': '2px'}),
         html.Div([
-            html.Span(f"⌀ Anzahl Stornos pro Airline", style={'font-size': '14px'}),
+            html.Span(f"⌀ Anzahl Stornos pro Airline", style={'fontSize': '14px'}),
             html.Br(),
-            html.Span("{:,}".format(int(cancellations_mean)).replace(',', '.'), style={'font-size': '16px', 'font-weight': 'bold'})
-        ], style={'margin-top': '3px'}),
+            html.Span("{:,}".format(int(cancellations_mean)).replace(',', '.'), style={'fontSize': '16px', 'fontWeight': 'bold'})
+        ], style={'marginTop': '3px'}),
         cancellations_sparkline_fig
     )
 
 #Tabelle mit Sparklines
-@app.callback(
+@callback(
     Output('flights-table', 'children'),
     [Input('airline-dropdown', 'value'),
      Input('reason-dropdown', 'value'),
@@ -649,27 +665,27 @@ def update_flights_table(selected_airline, selected_reason, selected_year, selec
             html.Td(arrivals_content, style=arrivals_style),
             html.Td(departures_content, style=departures_style),
             html.Td(cancellation_content, style={'width': '8%', 'textAlign': 'center','paddingRight': '1px',})  
-    ], style={'border-bottom': '1px solid #d3d3d3'}))
+    ], style={'borderBottom': '1px solid #d3d3d3'}))
 
     # Gib die gesamte Tabelle zurück
     return html.Table([
         html.Thead(html.Tr([
-            html.Th('Airline', style={'paddingRight': '0px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
-            html.Th('', style={'paddingRight': '1px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
-            html.Th(flights_label, style={'paddingRight': '2px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
-            html.Th('⌀ Pünktlich (Ankunft)', style={'paddingRight': '0px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
-            html.Th('⌀ Pünktlich (Abflug)', style={'paddingRight': '0px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle'}),
-            html.Th('⌀ Storniert', style={'paddingRight': '1px', 'border-top': '1px solid black', 'border-bottom': '1px solid black', 'height': '30px', 'vertical-align': 'middle', 'horizontal-align': 'center'})
-        ], style={'background-color': 'white', 'margin-bottom': '10px'})),
+            html.Th('Airline', style={'paddingRight': '0px', 'borderTop': '1px solid black', 'borderBottom': '1px solid black', 'height': '30px', 'verticalAlign': 'middle'}),
+            html.Th('', style={'paddingRight': '1px', 'borderTop': '1px solid black', 'borderBottom': '1px solid black', 'height': '30px', 'verticalAlign': 'middle'}),
+            html.Th(flights_label, style={'paddingRight': '2px', 'borderTop': '1px solid black', 'borderBottom': '1px solid black', 'height': '30px', 'verticalAlign': 'middle'}),
+            html.Th('⌀ Pünktlich (Ankunft)', style={'paddingRight': '0px', 'borderTop': '1px solid black', 'borderBottom': '1px solid black', 'height': '30px', 'verticalAlign': 'middle'}),
+            html.Th('⌀ Pünktlich (Abflug)', style={'paddingRight': '0px', 'borderTop': '1px solid black', 'borderBottom': '1px solid black', 'height': '30px', 'verticalAlign': 'middle'}),
+            html.Th('⌀ Storniert', style={'paddingRight': '1px', 'borderTop': '1px solid black', 'borderBottom': '1px solid black', 'height': '30px', 'verticalAlign': 'middle', 'horizontalAlign': 'center'})
+        ], style={'backgroundColor': 'white', 'marginBottom': '10px'})),
         html.Tbody([
             html.Tr([html.Td('', style={'height': '10px'}) for _ in range(5)]),  # Leere Zeile einfügen
             *table_rows  # Bestehende Tabellenzeilen einfügen
-        ], style={'border-top': '1px solid black'})
-    ], style={'font-size': '0.85rem', 'width': '850px', 'height': '80%'})
+        ], style={'borderTop': '1px solid black'})
+    ], style={'fontSize': '0.85rem', 'width': '850px', 'height': '80%'})
 
 
 # Callback für das Balkendiagramm und das Abweichungsdiagramm
-@app.callback(
+@callback(
     [Output('cancellations-bar-chart', 'figure'),
      Output('cancellations-deviation-chart', 'figure')],
     [Input('airline-dropdown', 'value'),
@@ -879,7 +895,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
     return fig_bar, fig_deviation
 
 # Callback für das Kreisdiagramm
-@app.callback(
+@callback(
     Output('cancellations-pie-chart', 'figure'),
     [Input('airline-dropdown', 'value'),
      Input('reason-dropdown', 'value'),
@@ -937,7 +953,7 @@ def update_pie_chart(selected_airline, selected_reason, selected_year, selected_
 import plotly.express as px
 
 # Callback für das Small Multiples
-@app.callback(
+@callback(
     Output('cancellations-sm-chart', 'figure'),
     [Input('airline-dropdown', 'value'),
      Input('reason-dropdown', 'value'),
@@ -1098,6 +1114,6 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
 
 
 
-#Dash-App starten
-if __name__ == '__main__':
-    app.run_server(debug=True)
+# #Dash-App starten
+# if __name__ == '__main__':
+#     app.run_server(debug=True)
