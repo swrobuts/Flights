@@ -225,7 +225,7 @@ layout = html.Div([
                             ]),
                         ], className="d-flex justifyContent-around alignItems-center info-container"),
                     ]),
-                     style={'marginLeft':'-340px', 'width':'940px', 'height': '170px', 'marginBottom': '20px', 'backgroundColor': '#FEECEC'}
+                     style={'marginLeft':'-300px', 'width':'940px', 'height': '170px', 'marginBottom': '20px', 'backgroundColor': '#FEECEC'}
                 ),
              
             ),
@@ -236,12 +236,11 @@ layout = html.Div([
             ),
             dbc.Col(
                 dcc.Graph(id='cancellations-bar-chart', config={'displayModeBar': False}),
-                style={'marginLeft': '-100px', 'marginRight': '0px','textAlign': 'left', 'width': '400px'}  
+                style={'marginLeft': '-30px', 'marginRight': '0px','textAlign': 'left', 'width': '400px'}  
             ),
-            #html.Div(style={'width': '0.8%', 'height': 'auto', 'display': 'inline-block', 'visibility': 'hidden'}),
             dbc.Col(
                 dcc.Graph(id='cancellations-deviation-chart', config={'displayModeBar': False}),
-                style={'marginLeft': '-350px', 'textAlign': 'left', 'width': '300px'}  
+                style={'marginLeft': '-300px', 'textAlign': 'left', 'width': '290px'}  
             ),
         ]),
         dbc.Row([
@@ -283,13 +282,11 @@ def update_sidebar_state(n_clicks, data):
 def apply_sidebar_state(data):
     sidebar_style = styles['sidebar']
     content_style = styles['content']
-    # Setze ein einfaches Unicode-Zeichen für den geschlossenen Zustand
     icon_text = '▼'  
 
     if data and data['open']:
         sidebar_style = {**styles['sidebar'], **styles['sidebar-open']}
         content_style = {**styles['content'], **styles['content-open']}
-        # Setze ein anderes Unicode-Zeichen für den geöffneten Zustand
         icon_text = '▲'
 
     return sidebar_style, content_style, icon_text
@@ -745,7 +742,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
         plot_bgcolor='rgba(0,0,0,0)',
         height=440,
         width=650,
-        margin=dict({'pad':6}, l=0, r=0, t=60, b=0),
+        margin=dict({'pad':6}, l=0, r=10, t=60, b=0),
         bargap=0.4,  # Abstand zwischen den Balken
         title=dict(
             text=f"<b>Anzahl der Stornierungen nach Airlines in {selected_year if selected_year != 'Alle' else 'allen Jahren'}",
@@ -837,7 +834,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
                 zerolinecolor='grey',
                 zerolinewidth=0.5,
                 showticklabels=False,
-                range=[-max_deviation*1.2, max_deviation*1.2],  # Vergrößerung des Bereichs der x-Achse
+                range=[-max_deviation*1.2, max_deviation*1.2],  
                 title_text=''
             ),
             yaxis=dict(
@@ -858,8 +855,8 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
         ),
             plot_bgcolor='rgba(0,0,0,0)',
             height=440,
-            width=350,  
-            margin=dict({'pad':1}, l=0, r=30, t=57, b=0)
+            width=340,  
+            margin=dict({'pad':1}, l=40, r=15, t=57, b=0)
         )
     else:
         fig_deviation = go.Figure()
