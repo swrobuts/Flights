@@ -129,6 +129,7 @@ styles = {
     'info-main-value': {
         'fontSize': '1rem',
         'transition': 'fontSize 0.3s ease',
+        'marginTop':'20px',
     },
 }
 
@@ -194,9 +195,9 @@ layout = html.Div([
                             ], className="info-section"),
                             html.Div([
                                 dcc.Graph(id='all-flights-sparkline', config={'displayModeBar': False})
-                            ], style={'marginBottom':'0px', 'marginLeft': '30px'}),   
+                            ], style={'marginTop':'40px', 'marginLeft': '30px'}),   
                             html.Div([
-                                html.P(id='all-flights-diff', className="info-diff", style={'fontFamily': 'Arial, sans-serif', 'fontSize': '14px', 'lineHeight': '1.5', 'marginLeft': '30px'}),
+                                html.P(id='all-flights-diff', className="info-diff", style={'fontFamily': 'Arial, sans-serif', 'fontSize': '14px', 'lineHeight': '1.5', 'marginLeft': '30px', 'marginTop':'20px'}),
                                 html.P(id='all-flights-mean', className="info-diff", style={'fontFamily': 'Arial, sans-serif', 'fontSize': '14px', 'lineHeight': '1.5', 'marginLeft': '30px'})
                             ], className="info-section"),
                         ], className="d-flex justifyContent-around alignItems-center info-container"),
@@ -215,9 +216,9 @@ layout = html.Div([
                             ]),
                             html.Div([
                                 dcc.Graph(id='all-cancellations-sparkline', config={'displayModeBar': False})
-                            ], style={'marginBottom':'0px'}),                          
+                            ], style={'marginTop':'40px'}),                          
                             html.Div([
-                                html.P(id='all-cancellations-diff', className="info-diff", style={'fontFamily': 'Arial, sans-serif', 'fontSize': '14px', 'lineHeight': '1.5'}),
+                                html.P(id='all-cancellations-diff', className="info-diff", style={'fontFamily': 'Arial, sans-serif', 'fontSize': '14px', 'lineHeight': '1.5','marginTop':'20px'}),
                                 html.P(id='all-cancellations-mean', className="info-diff", style={'fontFamily': 'Arial, sans-serif', 'fontSize': '14px', 'lineHeight': '1.5'})
                             ]),
                             html.Div([
@@ -747,7 +748,7 @@ def update_charts(selected_airline, selected_reason, selected_year, selected_mon
         title=dict(
             text=f"<b>Anzahl der Stornierungen nach Airlines in {selected_year if selected_year != 'Alle' else 'allen Jahren'}",
             font=dict(size=14),
-            x=0.28,
+            x=0.29,
             xanchor='center',
             y=0.97,
             yanchor='top'

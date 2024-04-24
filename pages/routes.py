@@ -76,7 +76,7 @@ styles = {
         'width': '35px',
         'height': '35px' 
         },
-    'routes-selected-year': {'marginLeft': '10px', 'fontSize': '18px', 'font-weight': 'bold'},
+    'routes-selected-year': {'marginLeft': '10px', 'fontSize': '18px', 'fontWeight': 'bold'},
     'icon': {
         'transition': 'transform 0.3s ease-in-out',
         'display': 'block',  # Stellt sicher, dass das Icon als Blockelement behandelt wird
