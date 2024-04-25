@@ -1040,7 +1040,7 @@ def update_bar_chart(selected_airline, selected_reason, selected_year, selected_
            itemsizing='constant'  # Gleichbleibende Größe der Legenden-Symbole
         ),
         title=dict(  # Korrektur für die Eröffnungsklammer von dict
-            text='<b>Performance der Airlines: Pünktlichkeit bei Ankunft und Abflug</b>',  # HTML-Tag für Fettschrift und korrekter Abschluss des Texts
+            text='<b>Performance der Airlines: Pünktlichkeitsquote bei Ankunft und Abflug</b>',  # HTML-Tag für Fettschrift und korrekter Abschluss des Texts
             font=dict(
                 size=14,  # Schriftgröße für den Titel
                 family="Arial, sans-serif",  # Schriftart für den Titel

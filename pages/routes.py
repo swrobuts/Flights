@@ -212,10 +212,6 @@ def apply_sidebar_state(data):
     return sidebar_style, content_style, icon_text
 
 
-
-
-
-
 # Hilfsfunktion für die Formatierung der Flugzahlen
 def format_k_or_m(value):
     if value >= 1000000:

@@ -19,8 +19,8 @@ app.layout = html.Div(style={'backgroundColor': '#ffffff', 'color': '#333333'}, 
                             ],
                             nav=True,
                             in_navbar=True,
-                            label="More Pages",
-                            align_end=True,  # Menü auf der rechten Seite
+                            label="Weitere Seiten",
+                            align_end=True, 
                             style={'color': '#333333'}
                         )
                     ],
@@ -33,7 +33,7 @@ app.layout = html.Div(style={'backgroundColor': '#ffffff', 'color': '#333333'}, 
         ),
         color="light",
         dark=False,
-        style={'backgroundColor': '#ffffff', 'color': '#333333', 'marginBottom': '1px'},  # Kontrolle über den unteren Rand
+        style={'backgroundColor': '#ffffff', 'color': '#333333', 'marginBottom': '-50px'},  
     ),
     dbc.Container(
         [dash.page_container],
