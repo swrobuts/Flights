@@ -1,0 +1,1183 @@
+{
+  "name": "SemanticModel",
+  "compatibilityLevel": 1200,
+  "model": {
+    "culture": "de-DE",
+    "dataSources": [
+      {
+        "name": "SqlServer localhost flights",
+        "connectionString": "Provider=SQLOLEDB;Data Source=localhost;Integrated Security=SSPI;Persist Security Info=false;Initial Catalog=flights",
+        "impersonationMode": "impersonateAccount",
+        "account": "rober",
+        "annotations": [
+          {
+            "name": "ConnectionEditUISource",
+            "value": "SqlServer"
+          }
+        ]
+      }
+    ],
+    "tables": [
+      {
+        "name": "airlines",
+        "columns": [
+          {
+            "name": "IATA_CODE",
+            "dataType": "string",
+            "sourceColumn": "IATA_CODE",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "AIRLINE",
+            "dataType": "string",
+            "sourceColumn": "AIRLINE",
+            "sourceProviderType": "Char"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "airlines",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[airlines].*   FROM [dbo].[airlines] ",
+              "dataSource": "SqlServer localhost flights"
+            }
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[airlines].*   FROM [dbo].[airlines] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "airlines"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "cancellation_reasons",
+        "columns": [
+          {
+            "name": "cr_id",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "cr_id",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "reason",
+            "dataType": "string",
+            "sourceColumn": "reason",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "shortcut",
+            "dataType": "string",
+            "sourceColumn": "shortcut",
+            "sourceProviderType": "Char"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "cancellation_reasons",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[cancellation_reasons].*   FROM [dbo].[cancellation_reasons] ",
+              "dataSource": "SqlServer localhost flights"
+            }
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[cancellation_reasons].*   FROM [dbo].[cancellation_reasons] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "cancellation_reasons"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "cancelled",
+        "columns": [
+          {
+            "name": "cancellation_id",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "cancellation_id",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "state",
+            "dataType": "int64",
+            "sourceColumn": "state",
+            "sourceProviderType": "Integer"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "cancelled",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[cancelled].*   FROM [dbo].[cancelled] ",
+              "dataSource": "SqlServer localhost flights"
+            }
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[cancelled].*   FROM [dbo].[cancelled] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "cancelled"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "destination_airports",
+        "columns": [
+          {
+            "name": "destination_airport_id",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "destination_airport_id",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "iata_code",
+            "dataType": "string",
+            "sourceColumn": "iata_code",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "city",
+            "dataType": "string",
+            "sourceColumn": "city",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "country",
+            "dataType": "string",
+            "sourceColumn": "country",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "latitude",
+            "dataType": "double",
+            "sourceColumn": "latitude",
+            "sourceProviderType": "Single"
+          },
+          {
+            "name": "longitude",
+            "dataType": "double",
+            "sourceColumn": "longitude",
+            "sourceProviderType": "Single"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "destination_airports",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[destination_airports].*   FROM [dbo].[destination_airports] ",
+              "dataSource": "SqlServer localhost flights"
+            }
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[destination_airports].*   FROM [dbo].[destination_airports] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "destination_airports"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "diverted",
+        "columns": [
+          {
+            "name": "diverted_id",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "diverted_id",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "state",
+            "dataType": "int64",
+            "sourceColumn": "state",
+            "sourceProviderType": "Integer"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "diverted",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[diverted].*   FROM [dbo].[diverted] ",
+              "dataSource": "SqlServer localhost flights"
+            }
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[diverted].*   FROM [dbo].[diverted] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "diverted"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "flights",
+        "isHidden": true,
+        "columns": [
+          {
+            "name": "flight_id",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "flight_id",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "flight_number",
+            "dataType": "string",
+            "sourceColumn": "flight_number",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "scheduled_departure",
+            "dataType": "string",
+            "isHidden": true,
+            "sourceColumn": "scheduled_departure",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "departure_time",
+            "dataType": "string",
+            "isHidden": true,
+            "sourceColumn": "departure_time",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "departure_delay",
+            "dataType": "int64",
+            "sourceColumn": "departure_delay",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "taxi_out",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "taxi_out",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "wheels_off",
+            "dataType": "string",
+            "isHidden": true,
+            "sourceColumn": "wheels_off",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "wheels_on",
+            "dataType": "string",
+            "isHidden": true,
+            "sourceColumn": "wheels_on",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "taxi_in",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "taxi_in",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "scheduled_arrival",
+            "dataType": "string",
+            "sourceColumn": "scheduled_arrival",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "arrival_time",
+            "dataType": "string",
+            "sourceColumn": "arrival_time",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "arrival_delay",
+            "dataType": "int64",
+            "sourceColumn": "arrival_delay",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "scheduled_time",
+            "dataType": "int64",
+            "sourceColumn": "scheduled_time",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "elapsed_time",
+            "dataType": "int64",
+            "sourceColumn": "elapsed_time",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "air_time",
+            "dataType": "int64",
+            "sourceColumn": "air_time",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "distance",
+            "dataType": "int64",
+            "sourceColumn": "distance",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "airline_delay",
+            "dataType": "int64",
+            "sourceColumn": "airline_delay",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "weather_delay",
+            "dataType": "int64",
+            "sourceColumn": "weather_delay",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "air_system_delay",
+            "dataType": "int64",
+            "sourceColumn": "air_system_delay",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "security_delay",
+            "dataType": "int64",
+            "sourceColumn": "security_delay",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "late_aircraft_delay",
+            "dataType": "int64",
+            "sourceColumn": "late_aircraft_delay",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "FK_date",
+            "dataType": "dateTime",
+            "isHidden": true,
+            "sourceColumn": "FK_date",
+            "formatString": "yyyy-MM-dd",
+            "sourceProviderType": "WChar",
+            "annotations": [
+              {
+                "name": "Format",
+                "value": "<Format Format=\"DateTimeCustom\"><DateTimes><DateTime LCID=\"1031\" Group=\"ShortDate\" FormatString=\"yyyy-MM-dd\" /></DateTimes></Format>"
+              }
+            ]
+          },
+          {
+            "name": "FK_airline",
+            "dataType": "string",
+            "isHidden": true,
+            "sourceColumn": "FK_airline",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "FK_cancellation_reason",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "FK_cancellation_reason",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "FK_origin_airport",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "FK_origin_airport",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "FK_destination_airport",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "FK_destination_airport",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "FK_cancellation",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "FK_cancellation",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "FK_diverted",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "FK_diverted",
+            "sourceProviderType": "Integer"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "flights",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[flights].*   FROM [dbo].[flights] ",
+              "dataSource": "SqlServer localhost flights"
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "total flights",
+            "expression": "COUNT([flight_id])"
+          },
+          {
+            "name": "average delays (departure)",
+            "expression": "AVERAGE([departure_delay])"
+          },
+          {
+            "name": "average delays (arrival)",
+            "expression": "AVERAGE([arrival_delay])"
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[flights].*   FROM [dbo].[flights] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "flights"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "origin_airports",
+        "columns": [
+          {
+            "name": "origin_airport_id",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "origin_airport_id",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "iata_code",
+            "dataType": "string",
+            "sourceColumn": "iata_code",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "city",
+            "dataType": "string",
+            "sourceColumn": "city",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "country",
+            "dataType": "string",
+            "sourceColumn": "country",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "latitude",
+            "dataType": "double",
+            "sourceColumn": "latitude",
+            "sourceProviderType": "Single"
+          },
+          {
+            "name": "longitude",
+            "dataType": "double",
+            "sourceColumn": "longitude",
+            "sourceProviderType": "Single"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "origin_airports",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[origin_airports].*   FROM [dbo].[origin_airports] ",
+              "dataSource": "SqlServer localhost flights"
+            }
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[origin_airports].*   FROM [dbo].[origin_airports] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "origin_airports"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          }
+        ]
+      },
+      {
+        "name": "time",
+        "dataCategory": "Time",
+        "columns": [
+          {
+            "name": "date",
+            "dataType": "dateTime",
+            "isHidden": true,
+            "isKey": true,
+            "sourceColumn": "date",
+            "formatString": "yyyy-MM-dd",
+            "sortByColumn": "month_int",
+            "sourceProviderType": "WChar",
+            "annotations": [
+              {
+                "name": "Format",
+                "value": "<Format Format=\"DateTimeCustom\"><DateTimes><DateTime LCID=\"1031\" Group=\"ShortDate\" FormatString=\"yyyy-MM-dd\" /></DateTimes></Format>"
+              }
+            ]
+          },
+          {
+            "name": "year",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "year",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "month_int",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "month_int",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "quarter",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "quarter",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "week",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "week",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "weekday",
+            "dataType": "int64",
+            "isHidden": true,
+            "sourceColumn": "weekday",
+            "sourceProviderType": "Integer"
+          },
+          {
+            "name": "weekday_name",
+            "dataType": "string",
+            "isHidden": true,
+            "sourceColumn": "weekday_name",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "quarter_name",
+            "dataType": "string",
+            "isHidden": true,
+            "sourceColumn": "quarter_name",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "month_name",
+            "dataType": "string",
+            "isHidden": true,
+            "sourceColumn": "month_name",
+            "sortByColumn": "month_int",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "month",
+            "dataType": "string",
+            "isHidden": true,
+            "sourceColumn": "month",
+            "sourceProviderType": "Char"
+          },
+          {
+            "name": "week_name",
+            "dataType": "string",
+            "isHidden": true,
+            "sourceColumn": "week_name",
+            "sourceProviderType": "Char"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "time",
+            "dataView": "full",
+            "source": {
+              "type": "query",
+              "query": " \t\t\t\tSELECT [dbo].[time].*   FROM [dbo].[time] ",
+              "dataSource": "SqlServer localhost flights"
+            },
+            "annotations": [
+              {
+                "name": "TableWidgetSerialization",
+                "value": [
+                  "<?xml version=\"1.0\" encoding=\"UTF-16\"?><Gemini xmlns=\"TableWidgetSerialization\"><AnnotationContent><![CDATA[<?xml version=\"1.0\"?>",
+                  "<TableWidgetGridSerialization xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+                  "  <ColumnSuggestedType />",
+                  "  <ColumnFormat />",
+                  "  <ColumnAccuracy />",
+                  "  <ColumnCurrencySymbol />",
+                  "  <ColumnPositivePattern />",
+                  "  <ColumnNegativePattern />",
+                  "  <ColumnWidths>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>date</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>69</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>year</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>69</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>month_int</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>112</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>quarter</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>90</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>week</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>75</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>weekday</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>100</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>weekday_name</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>148</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>quarter_name</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>138</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>month_name</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>133</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>month</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>85</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>week_name</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>123</int>",
+                  "      </value>",
+                  "    </item>",
+                  "  </ColumnWidths>",
+                  "  <ColumnDisplayIndex>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>date</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>0</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>year</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>1</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>month_int</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>2</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>quarter</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>3</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>week</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>4</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>weekday</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>5</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>weekday_name</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>6</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>quarter_name</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>7</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>month_name</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>8</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>month</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>9</int>",
+                  "      </value>",
+                  "    </item>",
+                  "    <item>",
+                  "      <key>",
+                  "        <string>week_name</string>",
+                  "      </key>",
+                  "      <value>",
+                  "        <int>10</int>",
+                  "      </value>",
+                  "    </item>",
+                  "  </ColumnDisplayIndex>",
+                  "  <ColumnFrozen />",
+                  "  <ColumnChecked />",
+                  "  <ColumnFilter />",
+                  "  <SelectionFilter />",
+                  "  <FilterParameters />",
+                  "  <IsSortDescending>false</IsSortDescending>",
+                  "</TableWidgetGridSerialization>]]></AnnotationContent></Gemini>"
+                ]
+              }
+            ]
+          }
+        ],
+        "hierarchies": [
+          {
+            "name": "Datum",
+            "levels": [
+              {
+                "name": "Jahr",
+                "ordinal": 0,
+                "column": "year"
+              },
+              {
+                "name": "Quartal",
+                "ordinal": 1,
+                "column": "quarter_name"
+              },
+              {
+                "name": "Monat",
+                "ordinal": 2,
+                "column": "month_name"
+              },
+              {
+                "name": "Woche",
+                "ordinal": 3,
+                "column": "week_name"
+              },
+              {
+                "name": "Wochentag",
+                "ordinal": 4,
+                "column": "weekday_name"
+              },
+              {
+                "name": "Datum",
+                "ordinal": 5,
+                "column": "date"
+              }
+            ]
+          }
+        ],
+        "annotations": [
+          {
+            "name": "_TM_ExtProp_QueryDefinition",
+            "value": " \t\t\t\tSELECT [dbo].[time].*   FROM [dbo].[time] "
+          },
+          {
+            "name": "_TM_ExtProp_DbTableName",
+            "value": "time"
+          },
+          {
+            "name": "_TM_ExtProp_DbSchemaName",
+            "value": "dbo"
+          },
+          {
+            "name": "TableWidgetSerialization",
+            "value": [
+              "<?xml version=\"1.0\" encoding=\"UTF-16\"?><Gemini xmlns=\"TableWidgetSerialization\"><AnnotationContent><![CDATA[<?xml version=\"1.0\"?>",
+              "<TableWidgetGridSerialization xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
+              "  <ColumnSuggestedType />",
+              "  <ColumnFormat />",
+              "  <ColumnAccuracy />",
+              "  <ColumnCurrencySymbol />",
+              "  <ColumnPositivePattern />",
+              "  <ColumnNegativePattern />",
+              "  <ColumnWidths>",
+              "    <item>",
+              "      <key>",
+              "        <string>date</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>69</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>year</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>69</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>month_int</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>112</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>quarter</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>90</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>week</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>75</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>weekday</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>100</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>weekday_name</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>148</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>quarter_name</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>138</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>month_name</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>133</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>month</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>85</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>week_name</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>123</int>",
+              "      </value>",
+              "    </item>",
+              "  </ColumnWidths>",
+              "  <ColumnDisplayIndex>",
+              "    <item>",
+              "      <key>",
+              "        <string>date</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>0</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>year</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>1</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>month_int</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>2</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>quarter</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>3</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>week</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>4</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>weekday</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>5</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>weekday_name</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>6</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>quarter_name</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>7</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>month_name</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>8</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>month</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>9</int>",
+              "      </value>",
+              "    </item>",
+              "    <item>",
+              "      <key>",
+              "        <string>week_name</string>",
+              "      </key>",
+              "      <value>",
+              "        <int>10</int>",
+              "      </value>",
+              "    </item>",
+              "  </ColumnDisplayIndex>",
+              "  <ColumnFrozen />",
+              "  <ColumnChecked />",
+              "  <ColumnFilter />",
+              "  <SelectionFilter />",
+              "  <FilterParameters />",
+              "  <IsSortDescending>false</IsSortDescending>",
+              "</TableWidgetGridSerialization>]]></AnnotationContent></Gemini>"
+            ]
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "f300a919-f587-48bb-9154-772325f46652",
+        "fromTable": "flights",
+        "fromColumn": "FK_airline",
+        "toTable": "airlines",
+        "toColumn": "IATA_CODE"
+      },
+      {
+        "name": "1463fb05-1086-4ed1-a20b-ef7f1433fb8b",
+        "fromTable": "flights",
+        "fromColumn": "FK_cancellation_reason",
+        "toTable": "cancellation_reasons",
+        "toColumn": "cr_id"
+      },
+      {
+        "name": "3290666e-080a-4fcd-aa00-18395a2b0d82",
+        "fromTable": "flights",
+        "fromColumn": "FK_cancellation",
+        "toTable": "cancelled",
+        "toColumn": "cancellation_id"
+      },
+      {
+        "name": "0fe353df-6065-426f-94d8-8cbe5b548afb",
+        "fromTable": "flights",
+        "fromColumn": "FK_destination_airport",
+        "toTable": "destination_airports",
+        "toColumn": "destination_airport_id"
+      },
+      {
+        "name": "e7356278-de58-4a98-b60d-b4c2e376df33",
+        "fromTable": "flights",
+        "fromColumn": "FK_diverted",
+        "toTable": "diverted",
+        "toColumn": "diverted_id"
+      },
+      {
+        "name": "57bd8bb2-320d-4e7b-8dd7-f6ff6d135941",
+        "fromTable": "flights",
+        "fromColumn": "FK_origin_airport",
+        "toTable": "origin_airports",
+        "toColumn": "origin_airport_id"
+      },
+      {
+        "name": "85017965-5a82-452d-9630-9ad8d8dd398d",
+        "fromTable": "flights",
+        "fromColumn": "FK_date",
+        "toTable": "time",
+        "toColumn": "date"
+      }
+    ],
+    "annotations": [
+      {
+        "name": "ClientCompatibilityLevel",
+        "value": "400"
+      }
+    ]
+  },
+  "id": "SemanticModel"
+}
